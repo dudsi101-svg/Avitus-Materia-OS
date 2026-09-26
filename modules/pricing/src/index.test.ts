@@ -11,7 +11,7 @@ describe('exact pricing arithmetic', () => {
   });
 
   it('rounds upward to the smallest 4-decimal monetary unit when division is not exact', () => {
-    expect(calculatePrice([{ amount: '1.0000' }], 3333).recommendedPrice).toBe('1.4999');
+    expect(calculatePrice([{ amount: '1.0000' }], 3333).recommendedPrice).toBe('1.5000');
   });
 
   it('round-trips 4-decimal money and subtracts exactly', () => {
