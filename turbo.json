@@ -3,7 +3,7 @@
   "tasks": {
     "build": { "dependsOn": ["^build"], "outputs": ["dist/**", ".next/**", "!.next/cache/**"] },
     "dev": { "cache": false, "persistent": true },
-    "typecheck": { "dependsOn": ["^typecheck"], "outputs": [] },
+    "typecheck": { "dependsOn": ["^build"], "outputs": [] },
     "test": { "dependsOn": ["^build"], "outputs": [] }
   }
 }
