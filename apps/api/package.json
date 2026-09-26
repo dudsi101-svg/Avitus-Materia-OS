@@ -19,6 +19,8 @@
     "@avitus/database": "workspace:*",
     "@avitus/events": "workspace:*",
     "@avitus/iam": "workspace:*",
+    "@avitus/pricing": "workspace:*",
+    "@avitus/quotes": "workspace:*",
     "@avitus/shared": "workspace:*",
     "@nestjs/common": "^11.1.0",
     "@nestjs/core": "^11.1.0",
