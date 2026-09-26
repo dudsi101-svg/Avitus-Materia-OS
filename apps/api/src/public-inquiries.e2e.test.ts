@@ -130,6 +130,6 @@ suite('Public inquiry API', () => {
         companyWebsite: 'https://spam.invalid',
       })
       .expect(400);
-    expect(response.body.error.code).toBe('HTTP.VALIDATION_ERROR');
+    expect(response.body.error.code).toBe('VALIDATION.ERROR');
   });
 });
