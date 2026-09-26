@@ -1,102 +1,103 @@
 # Fly.io deployment — minimalna checklista po stronie właściciela
 
-Celem jest ograniczenie pracy ręcznej do minimum. Kod, Docker/Fly config, migracje i bootstrap są przygotowywane w repo. Po stronie właściciela zostają tylko operacje wymagające dostępu do kont Fly.io i home.pl.
+Celem jest ograniczenie pracy ręcznej do minimum. Kod, Docker/Fly config, migracje, bootstrap produkcyjnej organizacji oraz skrypty pierwszego wdrożenia są przygotowane w repo.
 
 ## Zasada bezpieczeństwa
 
-**Nie wysyłaj w czacie wartości sekretów, tokenów, haseł ani pełnego `DATABASE_URL`.** Screenshoty powinny pokazywać nazwy aplikacji/region/status, ale nie wartości sekretów.
+**Nie wysyłaj w czacie wartości sekretów, tokenów, haseł ani pełnego `DATABASE_URL`.** Screenshoty mogą pokazywać nazwy aplikacji, region i status, ale nie wartości sekretów.
 
-## Etap A — 2 minuty: pokaż aktualny stan Fly
+## Stan obecny — zaakceptowany plan
 
-1. Otwórz dashboard Fly.io.
-2. Wejdź do organizacji, w której ma działać Avitus Materia.
-3. Zrób screenshot widoku pokazującego istniejące Apps oraz Managed Postgres (jeśli jest).
-4. Wyślij screenshot do rozmowy.
+- Fly.io pozostaje główną platformą uruchomieniową.
+- home.pl pozostaje rejestratorem/DNS i miejscem obsługi poczty.
+- `dzik-os-panel` pozostaje nietknięty.
+- Avitus Materia dostaje własne aplikacje web/API oraz własny Fly Managed Postgres.
+- region startowy: `fra` (Frankfurt).
 
-Na podstawie tego ustalimy, czy wykorzystujemy istniejące zasoby czy tworzymy nowe. **Na tym etapie niczego nie usuwaj i nie twórz w ciemno.**
-
-## Etap B — jeśli brakuje zasobów
-
-Docelowo potrzebujemy tylko:
-- jednego Fly App dla strony (`web`),
-- jednego Fly App dla API (`api`),
-- jednego Fly Managed Postgres cluster.
-
-Preferowany region startowy: `fra` (Frankfurt), chyba że istniejący Avitus stack działa już w innym wspieranym regionie europejskim. API i baza powinny być w tym samym regionie.
-
-Proponowane nazwy:
+Docelowe zasoby:
 - `avitus-materia-web`
 - `avitus-materia-api`
-- baza/cluster: `avitus-materia-db`
+- `avitus-materia-db`
 
-Nazwy aplikacji Fly są globalnie unikalne; jeśli zajęte, wybierzemy najbliższy wariant.
+## Krok 1 — TERAZ: utwórz Managed Postgres
 
-## Etap C — sekrety
+W otwartym ekranie Fly Managed Postgres ustaw:
 
-API potrzebuje:
-- `DATABASE_URL` — ustawiony przez attach Managed Postgres,
-- `PUBLIC_INQUIRY_ORGANIZATION_ID` — stabilny UUID produkcyjnej organizacji,
-- `PUBLIC_INQUIRY_API_KEY` — mocny losowy sekret.
+- Name: `avitus-materia-db`
+- Region: `fra` / Frankfurt
+- Plan: `Basic`
+- Storage: `10 GB`
+- PostgreSQL: `17`
+- PostGIS: wyłączony
 
-Web potrzebuje:
-- `AVITUS_API_URL=http://<API_APP>.internal:4000`,
-- `PUBLIC_INQUIRY_API_KEY` — dokładnie ten sam sekret co API.
+Kliknij **Create cluster** i poczekaj, aż status będzie gotowy/healthy.
 
-Nie publikujemy `PUBLIC_INQUIRY_API_KEY` jako `NEXT_PUBLIC_*`.
+To jest jedyny krok, którego nie wykonujemy z repo bez dostępu do Twojego konta Fly.
 
-## Etap D — pierwszy deployment
+## Krok 2 — pierwszy deployment zautomatyzowany skryptem
 
-Deployment wykonujemy z repo/GitHub Codespaces albo terminala z `flyctl`:
+Po utworzeniu klastra pobierz najnowszy `main`, otwórz PowerShell w katalogu repo i uruchom:
 
-```bash
+```powershell
 fly auth login
-fly apps list
-fly mpg list
+powershell -ExecutionPolicy Bypass -File .\scripts\fly-first-deploy.ps1
 ```
 
-Po potwierdzeniu nazw zasobów:
+Skrypt sam:
+- znajdzie `avitus-materia-db`,
+- utworzy `avitus-materia-api` i `avitus-materia-web`, jeśli jeszcze nie istnieją,
+- podepnie Managed Postgres do API i ustawi `DATABASE_URL`,
+- użyje stałego UUID produkcyjnej organizacji Avitus Materia, dzięki czemu ponowne uruchomienie jest bezpieczne,
+- wygeneruje mocny sekret formularza bez zapisywania go na dysku,
+- ustawi sekrety API i web,
+- skonfiguruje prywatne połączenie web -> API przez `.internal`,
+- wdroży najpierw API, potem web,
+- wykona podstawowy smoke test `/ready` oraz strony `.fly.dev`.
 
-```bash
-fly deploy -c fly.api.toml -a <API_APP>
-fly deploy -c fly.web.toml -a <WEB_APP>
+Jeśli globalne nazwy aplikacji są zajęte, skrypt zatrzyma się zamiast tworzyć przypadkowe nazwy. Wtedy wybierzemy kontrolowany wariant i uruchomimy go z parametrami `-ApiApp` / `-WebApp`.
+
+## Krok 3 — test przed DNS
+
+Przed dotykaniem home.pl muszą działać:
+
+```text
+https://avitus-materia-api.fly.dev/health
+https://avitus-materia-api.fly.dev/ready
+https://avitus-materia-web.fly.dev
 ```
 
-Najpierw API, potem web.
+Dodatkowo wysyłamy jedno testowe zapytanie formularzem i potwierdzamy zapis w CRM/bazie.
 
-Przed zmianą DNS sprawdzamy:
-- `https://<API_APP>.fly.dev/health`
-- `https://<API_APP>.fly.dev/ready`
-- `https://<WEB_APP>.fly.dev`
-- jedno testowe zapytanie z formularza.
+## Krok 4 — automatyczny deployment z GitHub
 
-## Etap E — domena home.pl
+Repo zawiera `.github/workflows/deploy-fly.yml`, ale deployment jest domyślnie wyłączony.
 
-Dopiero gdy `.fly.dev` działa poprawnie:
+Po udanym pierwszym wdrożeniu ręcznym:
 
-1. Dodajemy w Fly certyfikaty/hostnames:
-   - `avitus-materia.com`
-   - `www.avitus-materia.com`
-   - `api.avitus-materia.com`
-2. Fly pokaże wymagane rekordy DNS.
-3. W home.pl wchodzimy:
-   - Domeny
-   - `Avitus-Materia.com`
-   - Hosting DNS
-   - Opcje
-   - Zarządzaj rekordami DNS
-4. Wpisujemy **dokładnie** wartości podane przez Fly.
-5. Nie ruszamy rekordów pocztowych MX/SPF/DKIM/DMARC.
+1. W Fly wygeneruj **organization-scoped token** (`fly tokens create org`). Jeden token musi mieć dostęp do obu aplikacji Avitus w tej samej organizacji.
+2. W GitHub -> Settings -> Secrets and variables -> Actions dodaj secret `FLY_API_TOKEN`.
+3. W GitHub -> Actions variables dodaj `FLY_DEPLOY_ENABLED=true`.
+4. Opcjonalnie ustaw `FLY_API_APP` i `FLY_WEB_APP`, jeśli nazwy różnią się od domyślnych.
 
-## Etap F — test końcowy
+Od tej chwili udany CI na `main` uruchomi deployment API, sprawdzi `/ready`, a potem wdroży web. Token pozostaje wyłącznie w GitHub Actions Secrets.
 
-Po propagacji DNS:
-- strona działa na `https://avitus-materia.com`,
-- SSL jest aktywny,
-- `api.avitus-materia.com/health` i `/ready` odpowiadają,
-- formularz tworzy CRM Lead,
-- poczta nadal działa,
-- mobile i desktop są sprawdzone.
+## Krok 5 — domena home.pl
+
+Dopiero po poprawnym działaniu `.fly.dev` uruchom:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\fly-domain-setup.ps1
+```
+
+Skrypt:
+- poprosi Fly o certyfikaty dla `avitus-materia.com`, `www.avitus-materia.com` i `api.avitus-materia.com`,
+- pokaże dokładne wymagania DNS dla każdego hosta,
+- pokaże aktualne IP ingress aplikacji.
+
+Następnie w home.pl wpisujemy **wyłącznie dokładne rekordy pokazane przez Fly**. Nie ruszamy rekordów pocztowych MX/SPF/DKIM/DMARC.
+
+Po propagacji sprawdzamy SSL, domenę apex, `www`, API oraz pocztę.
 
 ## Co właściciel ma zrobić TERAZ
 
-Tylko **Etap A**: otworzyć Fly.io i wysłać screenshot organizacji z listą obecnych Apps/Managed Postgres. Reszty na razie nie klikaj — wykorzystamy to, co już istnieje, jeśli się nadaje.
+Dokończyć **Krok 1**: utworzyć `avitus-materia-db` zgodnie z parametrami powyżej. Po pojawieniu się ekranu gotowego klastra można wysłać screenshot bez sekretów. Resztę pierwszego deploymentu maksymalnie przejmują skrypty w repo.

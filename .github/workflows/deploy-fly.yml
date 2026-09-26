@@ -1,0 +1,73 @@
+name: Deploy Fly Production
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+
+concurrency:
+  group: fly-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_branch == 'main' &&
+      vars.FLY_DEPLOY_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    env:
+      FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+      FLY_API_APP: ${{ vars.FLY_API_APP || 'avitus-materia-api' }}
+      FLY_WEB_APP: ${{ vars.FLY_WEB_APP || 'avitus-materia-web' }}
+    steps:
+      - name: Checkout verified commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Set up flyctl
+        uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Validate deployment token
+        shell: bash
+        run: |
+          if [ -z "$FLY_API_TOKEN" ]; then
+            echo "FLY_API_TOKEN is not configured."
+            exit 1
+          fi
+
+      - name: Deploy API
+        run: flyctl deploy -c fly.api.toml -a "$FLY_API_APP" --remote-only
+
+      - name: Verify API readiness
+        shell: bash
+        run: |
+          for attempt in {1..20}; do
+            if curl --fail --silent --show-error "https://${FLY_API_APP}.fly.dev/ready" >/dev/null; then
+              echo "API is ready."
+              exit 0
+            fi
+            sleep 6
+          done
+          echo "API readiness check failed."
+          exit 1
+
+      - name: Deploy web
+        run: flyctl deploy -c fly.web.toml -a "$FLY_WEB_APP" --remote-only
+
+      - name: Verify public web
+        shell: bash
+        run: |
+          for attempt in {1..20}; do
+            if curl --fail --silent --show-error "https://${FLY_WEB_APP}.fly.dev" >/dev/null; then
+              echo "Web is reachable."
+              exit 0
+            fi
+            sleep 6
+          done
+          echo "Web health check failed."
+          exit 1
