@@ -1,0 +1,26 @@
+{
+  "name": "avitus-materia-os",
+  "private": true,
+  "version": "0.0.0",
+  "packageManager": "pnpm@10.17.1",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev --parallel",
+    "lint": "node scripts/verify-boundaries.mjs",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "db:migrate": "pnpm --filter @avitus/database migrate",
+    "db:seed:dev": "pnpm --filter @avitus/database seed:dev",
+    "ci": "pnpm lint && pnpm typecheck && pnpm test && pnpm build"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.0",
+    "prettier": "^3.5.3",
+    "turbo": "^2.5.6",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4"
+  }
+}

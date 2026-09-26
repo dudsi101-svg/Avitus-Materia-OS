@@ -1,139 +1,119 @@
 # Avitus Materia OS — Project State
 
-**Checkpoint:** 0
+**Checkpoint:** 1 — Sprint 0 foundation validated
 **Date:** 2026-09-26
-**Status:** Architecture / pre-implementation
+**Status:** Sprint 0 implementation complete on branch `sprint-0/core-foundation`; PR #1 awaiting final frozen-lockfile CI and merge.
 
 ## Identity
 - Brand: **Avitus Materia**
 - Main domain: **Avitus-Materia.com**
 - Repository: `dudsi101-svg/Avitus-Materia-OS`
-- Previous brand: Drakkar — treated strictly as legacy/history due to name collision; migrate data and recognition, do not embed the old brand into core code.
+- Previous brand: Drakkar — legacy/history only; do not embed it into new Core names.
 
 ## Product definition
-Avitus Materia OS is intended to become the central AI-native operating and sales system for Avitus Materia, covering the customer journey and operating flow from acquisition through production and after-sales.
+Avitus Materia OS is the central AI-native Operating & Sales System for custom manufacturing.
 
 Canonical value flow:
 
 `MARKET -> CONTENT -> LEAD -> CUSTOMER -> CONFIGURATION -> QUOTE -> ORDER -> PROJECT -> MATERIAL -> PRODUCTION -> DELIVERY -> FINANCE -> RELATIONSHIP -> DATA -> AUTOMATION -> AI`
 
-It is not intended to be merely a CRM, ERP, store, production panel or chatbot.
+Core principle:
 
-## Accepted direction
-- Monorepo
-- Modular monolith initially
-- API-first
-- Event-aware / durable event-outbox direction
-- PostgreSQL as primary relational source of truth
-- PWA / responsive / mobile-first interfaces
-- Object storage for files/media
-- External proven authentication provider + MFA
-- AI Gateway must remain model-agnostic
-- Strong auditability for critical business actions
-- Single-company UX first; multi-organization domain model from day one
-
-## Core principle
 **DATA TRUTH -> AUTOMATION -> INTELLIGENCE**
 
-Reliable data and domain rules precede automation; automation precedes autonomous AI.
+## Architecture baseline
+- Monorepo + modular monolith
+- TypeScript / Node.js
+- Next.js admin surface
+- NestJS API composition root
+- PostgreSQL source of truth
+- Drizzle SQL-first typed data access
+- Zod boundary validation
+- organization scoping from day one
+- RBAC foundation
+- append-oriented audit history
+- domain events + transactional PostgreSQL outbox foundation
+- development-only auth adapter that is forbidden in production
+- no arbitrary AI database access
 
-## Core domains identified
-- IAM / Organization
-- Acquisition / Attribution
-- CRM / Customers / Opportunities
-- Catalog / Products
-- Configurator
-- Pricing / Quotes
-- Orders
-- Projects
-- Materials / Inventory
-- Purchasing
-- Production / Quality
-- Logistics / Installation
-- Finance / Profitability
-- Communications
-- Automation
-- Intelligence / AI
-- Integrations
-- Audit
-- Scheduling / Capacity
-- Visualizations
-- Partner network
+## Sprint 0 vertical slice
+Validated flow:
 
-## Core data/model decisions
-- `Organization` is foundational; business entities are organization-scoped where appropriate.
-- `Order` and `Project` are distinct concepts.
-- `Quote` has immutable `QuoteVersion` records.
-- `PriceCalculation` is separate from final sale price.
-- Important materials may have individual digital twins (`MaterialItem`) and QR/location/status history.
-- Inventory truth is based on movements/reservations, not a casually overwritten stock number.
-- Production is modeled as jobs + operations + workflow templates.
-- Critical changes create audit records; business changes emit meaningful domain events.
-- AI acts through controlled domain tools/services rather than arbitrary production DB access.
+`Authenticated development user -> Organization context -> Create/List/Read Lead -> AuditEvent + LeadCreated DomainEvent + OutboxEvent -> Admin UI`
+
+Implemented on `sprint-0/core-foundation`:
+- pnpm workspace + Turborepo
+- committed `pnpm-lock.yaml` for reproducible installs
+- strict TypeScript baseline
+- `apps/api` NestJS API
+- `apps/admin` Next.js minimal Command Center
+- `packages/config`
+- `packages/database`
+- `packages/shared`
+- `modules/iam`
+- `modules/crm`
+- `modules/audit`
+- `modules/events`
+- PostgreSQL migration runner
+- Sprint 0 database migration
+- development seed for Avitus Materia organization/user/permissions
+- organization-scoped Lead repository
+- `LeadCreated` domain event persistence
+- transactionally persisted outbox record
+- audit record created in the same Unit of Work
+- correlation IDs and structured HTTP error shape
+- health/readiness endpoints
+- tenant-isolation integration test
+- API E2E test covering Lead creation, audit/event/outbox persistence, organization isolation and structured validation errors
+- GitHub Actions CI
+- local Docker PostgreSQL
+- local-development instructions
+- basic module-boundary verification script
+
+## Validation completed
+CI has demonstrated successful execution of:
+- dependency installation
+- PostgreSQL migration
+- development seed
+- module-boundary lint
+- TypeScript typecheck
+- CRM unit/integration tests
+- API E2E tests
+- production build
+
+During validation the tests found and drove fixes for:
+1. workspace build ordering before typecheck,
+2. environment propagation into Turborepo test processes,
+3. reliable DomainError classification across package/bundle boundaries,
+4. cross-organization Lead lookup behavior returning a safe `404` instead of exposing another organization's data.
+
+## Security / isolation decisions enforced
+- Business reads require explicit `organizationId`.
+- Lead lookups filter by both organization and entity ID.
+- Development auth requires explicit user + organization headers and validates membership.
+- `AUTH_MODE=development` cannot start when `NODE_ENV=production`.
+- Lead creation checks `crm.lead.write`; reads check `crm.lead.read`.
+- Audit/event records retain organization, actor and correlation context.
+- Cross-organization Lead list/read isolation is covered by database integration and HTTP E2E tests.
+
+## Deliberate Sprint 0 limitations
+1. External production identity provider is intentionally not selected/connected yet. Production startup rejects the development auth mode.
+2. Outbox persistence exists; publisher/worker delivery is a later slice. No fake delivery guarantee is claimed.
+3. Observability is currently limited to health/readiness, correlation IDs and CI diagnostics; production telemetry comes later.
+4. No AI agent or customer configurator execution is included in Sprint 0.
 
 ## Customer-facing strategic pillar
-The **AI Product Configurator & Customer Experience** is a core system surface. It should eventually support:
-- guided product selection and configuration
-- AI conversational help
-- configuration/version history
-- live or estimated pricing
-- lead-time and capacity-aware delivery estimates
-- customer account/portal continuity
-- uploading a photo of the room/location
-- AI analysis of the scene
-- generated arrangement/visualization of the configured product in that environment
-- saving and comparing variants
-- handoff to quote/order/human advisor
+The AI Product Configurator remains a first-class system surface. Its domain/UX direction is documented and will follow the Lead/Opportunity/Configuration sales foundation rather than bypassing source-of-truth modeling.
 
-## Future partner-network pillar
-The architecture must not block a future environment coordinating woodworking subcontractors/partners. Future capabilities may include:
-- partner organizations
-- capability/machine/process registry
-- capacity and availability
-- work orders for elements/processes/products
-- documentation sharing
-- scoped permissions
-- quality gates and inspection
-- progress monitoring
-- settlement
-- API/webhook integration with partners' own systems
-- distributed manufacturing orchestration
+## Future partner network
+Core remains organization-aware to preserve the path to Partner Organizations, capability registry, Work Orders, scoped partner portal and distributed manufacturing orchestration.
 
-## AI maturity model
-- L1 Observer
-- L2 Advisor
-- L3 Operator with approval
-- L4 Autonomous within explicit policy boundaries
+## Next engineering sequence
+1. Complete final CI using the committed lockfile with `pnpm install --frozen-lockfile`.
+2. Merge PR #1 only after that CI is green.
+3. Start Sprint 1 on a fresh branch with vertical slice `Lead -> Opportunity -> Configuration`.
+4. Introduce quote/pricing versioning after the configuration foundation.
+5. Build the first customer-facing configurator slice on top of those stable sources of truth.
 
-Initial implementation should prioritize L1/L2 while preserving a safe path to L3/L4.
-
-## MVP direction
-First useful slice should focus on business value:
-- CRM/leads/customers/sources
-- product/configuration foundation
-- quote/pricing/versioning/margin
-- order/payment schedule
-- project/tasks
-- simplified materials/inventory
-- command center
-- audit
-- AI L1/L2 assistance
-
-Do not prematurely build full SaaS multi-tenancy, marketplace, full MES, full accounting, proprietary CAD, Kubernetes or many microservices.
-
-## Current documentation state
-- Core domain v0.1: captured in prior design work
-- Data model v0.2: captured in prior design work
-- Domain rules/state machines v0.3: captured in prior design work; one user backup is incomplete near the end, so canonical rules should be consolidated before implementation
-- Technical architecture v0.4: next major architecture deliverable
-- AI Product Configurator specification: being promoted to a first-class document now
-
-## Immediate next steps
-1. Consolidate architecture decisions in `docs/DECISIONS.md`.
-2. Finalize `docs/AI_PRODUCT_CONFIGURATOR.md`.
-3. Produce Technical Architecture v0.4 with concrete stack choices.
-4. Define Sprint 0 bootstrap scope.
-5. Only then create implementation scaffolding.
-
-## Risk: context loss
-Chat history has become long enough that relying on conversation alone is unsafe. From this checkpoint onward, material decisions must be persisted in the repository. Repository documentation is the project memory.
+## Project memory rule
+GitHub documentation is the durable project memory. Material architectural/product decisions must be reflected in repository docs rather than relying on chat history alone.

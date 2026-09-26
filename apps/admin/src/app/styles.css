@@ -1,0 +1,26 @@
+:root { font-family: Inter, ui-sans-serif, system-ui, sans-serif; color: #171717; background: #f5f4ef; }
+* { box-sizing: border-box; }
+body { margin: 0; }
+button, input, select { font: inherit; }
+.shell { max-width: 1120px; margin: 0 auto; padding: 48px 24px; }
+.hero { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; margin-bottom: 32px; }
+.hero h1 { margin: 4px 0 8px; font-size: clamp(2rem, 5vw, 4rem); letter-spacing: -0.05em; }
+.eyebrow { text-transform: uppercase; letter-spacing: .14em; font-size: .76rem; font-weight: 700; }
+.status { border: 1px solid #b4b19f; border-radius: 999px; padding: 8px 12px; background: #fff; }
+.grid { display: grid; grid-template-columns: minmax(280px, .8fr) minmax(360px, 1.2fr); gap: 20px; }
+.panel { background: #fff; border: 1px solid #d8d6cc; border-radius: 18px; padding: 24px; box-shadow: 0 16px 40px rgba(0,0,0,.04); }
+.panel h2 { margin-top: 0; }
+.form { display: grid; gap: 16px; }
+label { display: grid; gap: 7px; font-size: .9rem; font-weight: 650; }
+input, select { width: 100%; border: 1px solid #c9c6b8; border-radius: 10px; padding: 11px 12px; background: #fff; }
+button { border: 0; border-radius: 10px; padding: 11px 14px; background: #171717; color: #fff; cursor: pointer; font-weight: 700; }
+button:disabled { opacity: .5; cursor: not-allowed; }
+button.secondary { background: #eceae1; color: #171717; padding: 8px 10px; }
+.row { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+.leadList { display: grid; gap: 10px; }
+.lead { display: flex; justify-content: space-between; align-items: center; gap: 16px; border-top: 1px solid #eceae1; padding: 14px 0; }
+.lead p { margin: 4px 0 0; color: #757266; font-size: .85rem; }
+.lead > span { font-size: .75rem; font-weight: 800; background: #eceae1; border-radius: 999px; padding: 6px 8px; }
+.muted { color: #757266; }
+.error { color: #9a1b1b; background: #fff0f0; border-radius: 10px; padding: 10px; }
+@media (max-width: 760px) { .grid { grid-template-columns: 1fr; } .hero { flex-direction: column; } }
