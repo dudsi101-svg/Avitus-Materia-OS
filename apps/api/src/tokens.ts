@@ -9,6 +9,8 @@ export const TOKENS = {
   configurationRepository: Symbol('configurationRepository'),
   priceCalculationRepository: Symbol('priceCalculationRepository'),
   quoteRepository: Symbol('quoteRepository'),
+  customerAccountRepository: Symbol('customerAccountRepository'),
+  customerLinkRepository: Symbol('customerLinkRepository'),
   createLeadService: Symbol('createLeadService'),
   readLeadService: Symbol('readLeadService'),
   createOpportunityService: Symbol('createOpportunityService'),
@@ -22,4 +24,9 @@ export const TOKENS = {
   createQuoteService: Symbol('createQuoteService'),
   reviseQuoteService: Symbol('reviseQuoteService'),
   readQuoteService: Symbol('readQuoteService'),
+  createPersonCustomerService: Symbol('createPersonCustomerService'),
+  createCompanyCustomerService: Symbol('createCompanyCustomerService'),
+  readCustomerService: Symbol('readCustomerService'),
+  linkCustomerService: Symbol('linkCustomerService'),
+  customerContextService: Symbol('customerContextService'),
 } as const;
