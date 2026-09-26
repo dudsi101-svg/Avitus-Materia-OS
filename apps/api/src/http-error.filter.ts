@@ -1,6 +1,6 @@
 import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus } from '@nestjs/common';
 import type { Response } from 'express';
-import { DomainError } from '@avitus/shared';
+import { isDomainError } from '@avitus/shared';
 import { ZodError } from 'zod';
 import type { AvitusRequest } from './request-context';
 
@@ -10,6 +10,7 @@ export class HttpErrorFilter implements ExceptionFilter {
     const response = host.switchToHttp().getResponse<Response>();
     const request = host.switchToHttp().getRequest<AvitusRequest>();
     const correlationId = request.correlationId;
+
     if (exception instanceof ZodError) {
       response.status(HttpStatus.BAD_REQUEST).json({
         error: { code: 'VALIDATION.ERROR', message: 'Request validation failed.', details: exception.flatten() },
@@ -17,14 +18,21 @@ export class HttpErrorFilter implements ExceptionFilter {
       });
       return;
     }
-    if (exception instanceof DomainError) {
-      const status = exception.code === 'AUTH.FORBIDDEN' ? HttpStatus.FORBIDDEN : exception.code.endsWith('NOT_FOUND') ? HttpStatus.NOT_FOUND : HttpStatus.BAD_REQUEST;
+
+    if (isDomainError(exception)) {
+      const status =
+        exception.code === 'AUTH.FORBIDDEN'
+          ? HttpStatus.FORBIDDEN
+          : exception.code.endsWith('NOT_FOUND')
+            ? HttpStatus.NOT_FOUND
+            : HttpStatus.BAD_REQUEST;
       response.status(status).json({
         error: { code: exception.code, message: exception.message, details: exception.details },
         correlationId,
       });
       return;
     }
+
     if (exception instanceof HttpException) {
       response.status(exception.getStatus()).json({
         error: { code: `HTTP.${exception.getStatus()}`, message: exception.message },
@@ -32,6 +40,7 @@ export class HttpErrorFilter implements ExceptionFilter {
       });
       return;
     }
+
     console.error({ correlationId, exception });
     response.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
       error: { code: 'INTERNAL.ERROR', message: 'Unexpected server error.' },
