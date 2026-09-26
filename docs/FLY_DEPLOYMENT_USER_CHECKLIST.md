@@ -1,6 +1,6 @@
 # Fly.io deployment — minimalna checklista po stronie właściciela
 
-Celem jest ograniczenie pracy ręcznej do minimum. Kod, Docker/Fly config, migracje, bootstrap produkcyjnej organizacji oraz skrypt pierwszego wdrożenia są przygotowane w repo.
+Celem jest ograniczenie pracy ręcznej do minimum. Kod, Docker/Fly config, migracje, bootstrap produkcyjnej organizacji oraz skrypty pierwszego wdrożenia są przygotowane w repo.
 
 ## Zasada bezpieczeństwa
 
@@ -83,18 +83,21 @@ Od tej chwili udany CI na `main` uruchomi deployment API, sprawdzi `/ready`, a p
 
 ## Krok 5 — domena home.pl
 
-Dopiero po poprawnym działaniu `.fly.dev`:
+Dopiero po poprawnym działaniu `.fly.dev` uruchom:
 
-1. Dodajemy certyfikaty/hostnames Fly dla:
-   - `avitus-materia.com`
-   - `www.avitus-materia.com`
-   - `api.avitus-materia.com`
-2. Fly poda dokładne wymagania DNS.
-3. W home.pl zmieniamy wyłącznie rekordy potrzebne dla strony/API.
-4. Nie ruszamy rekordów pocztowych MX/SPF/DKIM/DMARC.
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\fly-domain-setup.ps1
+```
+
+Skrypt:
+- poprosi Fly o certyfikaty dla `avitus-materia.com`, `www.avitus-materia.com` i `api.avitus-materia.com`,
+- pokaże dokładne wymagania DNS dla każdego hosta,
+- pokaże aktualne IP ingress aplikacji.
+
+Następnie w home.pl wpisujemy **wyłącznie dokładne rekordy pokazane przez Fly**. Nie ruszamy rekordów pocztowych MX/SPF/DKIM/DMARC.
 
 Po propagacji sprawdzamy SSL, domenę apex, `www`, API oraz pocztę.
 
 ## Co właściciel ma zrobić TERAZ
 
-Dokończyć **Krok 1**: utworzyć `avitus-materia-db` zgodnie z parametrami powyżej. Po pojawieniu się ekranu gotowego klastra można wysłać screenshot bez sekretów. Resztę pierwszego deploymentu maksymalnie przejmuje skrypt w repo.
+Dokończyć **Krok 1**: utworzyć `avitus-materia-db` zgodnie z parametrami powyżej. Po pojawieniu się ekranu gotowego klastra można wysłać screenshot bez sekretów. Resztę pierwszego deploymentu maksymalnie przejmują skrypty w repo.
