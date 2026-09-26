@@ -15,9 +15,32 @@ type ProductOption = {
 type Product = { id: string; name: string; sku: string; productType: string; options: ProductOption[] };
 type Configuration = {
   id: string;
+  opportunityId: string;
   status: string;
   currentVersion: number;
   versions: Array<{ versionNumber: number; readinessIssues: string[] }>;
+};
+type PriceCalculation = {
+  id: string;
+  configurationVersionNumber: number;
+  currency: string;
+  targetMarginBps: number;
+  totalCost: string;
+  recommendedPrice: string;
+};
+type Quote = {
+  id: string;
+  quoteNumber: string;
+  status: string;
+  currency: string;
+  currentVersion: number;
+  versions: Array<{
+    versionNumber: number;
+    configurationVersionNumber: number;
+    total: string;
+    estimatedCost: string;
+    marginAmount: string;
+  }>;
 };
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
@@ -53,6 +76,12 @@ export function SalesFoundationConsole() {
   const [selectedProduct, setSelectedProduct] = useState('');
   const [configurationData, setConfigurationData] = useState<Record<string, unknown>>({});
   const [lastConfiguration, setLastConfiguration] = useState<Configuration | null>(null);
+  const [materialCost, setMaterialCost] = useState('5000.0000');
+  const [laborCost, setLaborCost] = useState('2000.0000');
+  const [transportCost, setTransportCost] = useState('500.0000');
+  const [targetMarginBps, setTargetMarginBps] = useState('4000');
+  const [lastPrice, setLastPrice] = useState<PriceCalculation | null>(null);
+  const [lastQuote, setLastQuote] = useState<Quote | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -82,6 +111,8 @@ export function SalesFoundationConsole() {
   useEffect(() => {
     setConfigurationData({});
     setLastConfiguration(null);
+    setLastPrice(null);
+    setLastQuote(null);
   }, [selectedProduct]);
 
   async function createOpportunity(event: FormEvent<HTMLFormElement>) {
@@ -114,12 +145,63 @@ export function SalesFoundationConsole() {
           opportunityId: selectedOpportunity,
           productId: selectedProduct,
           configurationData,
-          reason: 'Created from Sprint 1 admin console',
+          reason: 'Created from admin Command Center',
         }),
       });
       setLastConfiguration(created);
+      setLastPrice(null);
+      setLastQuote(null);
     } catch (value) {
       setError(value instanceof Error ? value.message : 'Configuration creation failed');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function createPriceCalculation(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!lastConfiguration) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const created = await api<PriceCalculation>('/pricing/calculations', {
+        method: 'POST',
+        body: JSON.stringify({
+          configurationId: lastConfiguration.id,
+          currency: 'PLN',
+          targetMarginBps: Number(targetMarginBps),
+          components: [
+            { componentType: 'MATERIAL', label: 'Materiał', amount: materialCost },
+            { componentType: 'LABOR', label: 'Robocizna', amount: laborCost },
+            { componentType: 'TRANSPORT', label: 'Transport', amount: transportCost },
+          ],
+        }),
+      });
+      setLastPrice(created);
+      setLastQuote(null);
+    } catch (value) {
+      setError(value instanceof Error ? value.message : 'Price calculation failed');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function createQuote() {
+    if (!lastConfiguration || !lastPrice) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const created = await api<Quote>('/quotes', {
+        method: 'POST',
+        body: JSON.stringify({
+          opportunityId: lastConfiguration.opportunityId,
+          configurationId: lastConfiguration.id,
+          priceCalculationId: lastPrice.id,
+        }),
+      });
+      setLastQuote(created);
+    } catch (value) {
+      setError(value instanceof Error ? value.message : 'Quote creation failed');
     } finally {
       setBusy(false);
     }
@@ -140,8 +222,8 @@ export function SalesFoundationConsole() {
     <section className="salesSection">
       <div className="sectionHeading">
         <div>
-          <p className="eyebrow">Sprint 1 · Sales foundation</p>
-          <h2>Lead → Opportunity → Configuration</h2>
+          <p className="eyebrow">Sprint 1–2 · Sales & pricing foundation</p>
+          <h2>Lead → Opportunity → Configuration → Pricing → Quote</h2>
         </div>
         <button className="secondary" onClick={() => load().catch(() => setError('Refresh failed'))}>
           Odśwież dane
@@ -218,11 +300,48 @@ export function SalesFoundationConsole() {
             <div className="resultBox">
               <strong>{lastConfiguration.status}</strong>
               <span>wersja {lastConfiguration.currentVersion}</span>
-              <small>{lastConfiguration.versions.at(-1)?.readinessIssues.join(', ') || 'Gotowa do kolejnego etapu'}</small>
+              <small>{lastConfiguration.versions.at(-1)?.readinessIssues.join(', ') || 'Gotowa do wyceny'}</small>
             </div>
           ) : null}
         </article>
       </div>
+
+      <div className="commercialFlow">
+        <article className="panel">
+          <h3>Kalkulacja ceny</h3>
+          <p className="muted">Koszty są zapisywane jako dane historyczne. Cena jest przypięta do konkretnej wersji konfiguracji.</p>
+          <form className="form" onSubmit={createPriceCalculation}>
+            <label>Materiał PLN<input value={materialCost} onChange={(event) => setMaterialCost(event.target.value)} inputMode="decimal" /></label>
+            <label>Robocizna PLN<input value={laborCost} onChange={(event) => setLaborCost(event.target.value)} inputMode="decimal" /></label>
+            <label>Transport PLN<input value={transportCost} onChange={(event) => setTransportCost(event.target.value)} inputMode="decimal" /></label>
+            <label>Docelowa marża (bps)<input value={targetMarginBps} onChange={(event) => setTargetMarginBps(event.target.value)} inputMode="numeric" /></label>
+            <button disabled={busy || lastConfiguration?.status !== 'READY_FOR_PRICING'} type="submit">Przelicz cenę</button>
+          </form>
+          {lastPrice ? (
+            <div className="resultBox">
+              <strong>{lastPrice.recommendedPrice} {lastPrice.currency}</strong>
+              <span>koszt {lastPrice.totalCost}</span>
+              <small>Konfiguracja v{lastPrice.configurationVersionNumber} · marża {lastPrice.targetMarginBps / 100}%</small>
+            </div>
+          ) : null}
+        </article>
+
+        <article className="panel">
+          <h3>Draft oferty</h3>
+          <p className="muted">Sprint 2 tworzy wewnętrzny DRAFT. Wysłanie, VAT, rabaty i akceptacja klienta będą kontrolowanymi kolejnymi etapami.</p>
+          <button disabled={busy || !lastPrice || !lastConfiguration} onClick={createQuote} type="button">Utwórz Quote v1</button>
+          {lastQuote ? (
+            <div className="resultBox">
+              <strong>{lastQuote.quoteNumber}</strong>
+              <span>{lastQuote.status}</span>
+              <small>
+                v{lastQuote.currentVersion} · {lastQuote.versions.at(-1)?.total} {lastQuote.currency} · marża {lastQuote.versions.at(-1)?.marginAmount}
+              </small>
+            </div>
+          ) : null}
+        </article>
+      </div>
+
       {error ? <p className="error">{error}</p> : null}
     </section>
   );

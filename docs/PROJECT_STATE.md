@@ -1,8 +1,8 @@
 # Avitus Materia OS — Project State
 
-**Checkpoint:** 2 — Sprint 1 sales foundation validated
+**Checkpoint:** 3 — Sprint 2 pricing / draft quote foundation validated
 **Date:** 2026-09-26
-**Status:** Sprint 0 is merged to `main`. Sprint 1 is implemented on `sprint-1/sales-foundation`; PR #2 is awaiting final CI after documentation checkpoint and merge.
+**Status:** Sprints 0–1 are merged to `main`. Sprint 2 is implemented on `sprint-2/pricing-quotes`; PR #3 awaits final CI after the documentation checkpoint and merge.
 
 ## Identity
 - Brand: **Avitus Materia**
@@ -24,7 +24,7 @@ Core principle:
 ## Architecture baseline
 - monorepo + modular monolith
 - TypeScript / Node.js
-- Next.js admin surface
+- Next.js admin Command Center
 - NestJS API composition root
 - PostgreSQL source of truth
 - Drizzle SQL-first typed data access
@@ -35,104 +35,116 @@ Core principle:
 - semantic domain events + transactional PostgreSQL outbox
 - development-only auth adapter forbidden in production
 - no arbitrary AI database access
-- configuration history is version/snapshot oriented rather than destructive overwrite
+- important commercial facts are version/snapshot oriented rather than destructively overwritten
+- monetary values are decimal source-of-truth values; business price arithmetic does not use binary floating point
 
 ## Sprint 0 — merged foundation
 Validated flow:
 
-`Authenticated development user -> Organization context -> Lead -> AuditEvent + LeadCreated DomainEvent + OutboxEvent -> Admin UI`
+`Authenticated user context -> Organization -> Lead -> AuditEvent + DomainEvent + Outbox -> Admin`
 
-Sprint 0 established:
-- pnpm workspace + Turborepo
-- reproducible `pnpm-lock.yaml`
-- strict TypeScript baseline
-- NestJS API and Next.js admin
-- PostgreSQL migration runner and seed
-- organization/user/membership/RBAC foundation
-- organization-scoped Lead repository/services/API
-- domain events, audit and transactional outbox persistence
-- correlation IDs and structured HTTP errors
-- health/readiness endpoints
-- tenant-isolation integration + API E2E coverage
-- GitHub Actions CI with frozen lockfile
-- module-boundary verification
+Established monorepo/tooling, API/admin composition roots, PostgreSQL, migrations/seed, organization-aware IAM/RBAC, Lead vertical slice, audit/domain events/outbox, structured errors, health/readiness, tenant-isolation tests, frozen lockfile and CI.
 
-## Sprint 1 — sales/configuration source of truth
-Validated vertical slice:
+## Sprint 1 — merged sales/configuration foundation
+Validated flow:
 
 `Lead -> Opportunity -> Product -> Configuration -> ConfigurationVersion`
 
-Implemented on `sprint-1/sales-foundation`:
-- organization-scoped Opportunity domain and API
-- ProductFamily / Product / ProductOptionDefinition catalog foundation
-- organization-scoped catalog reads
-- versioned Configuration domain
-- immutable configuration snapshots
-- product-option validation for NUMBER / TEXT / ENUM / BOOLEAN
-- min/max/enum/unknown-option validation
-- readiness evaluation: `INCOMPLETE` vs `READY_FOR_PRICING`
-- OpportunityCreated and Configuration events
-- audit + domain event + outbox persistence inside the business Unit of Work
-- Sprint 1 SQL migration
-- development product/options seed for configurable custom table
-- RBAC permissions for Opportunity, Catalog and Configuration
-- API E2E path covering Lead -> Opportunity -> Configuration
-- cross-organization isolation for Lead/Opportunity/Product/Configuration
-- invalid configuration/range test coverage
-- admin Command Center surface for creating Opportunity and Product Configuration
-- refreshed lockfile and successful frozen-lockfile CI
+Established:
+- organization-scoped Opportunity
+- ProductFamily / Product / ProductOptionDefinition catalog
+- versioned Configuration with immutable ConfigurationVersion snapshots
+- option type/range/choice/required validation
+- `INCOMPLETE` vs `READY_FOR_PRICING`
+- organization isolation through CRM/catalog/configurator
+- audit/domain-event/outbox persistence
+- admin Command Center path through Opportunity and Configuration
 
-## Validation completed
-CI has demonstrated successful execution of:
+## Sprint 2 — pricing and internal draft quote source of truth
+Validated flow:
+
+`ConfigurationVersion -> PriceCalculation -> CostComponents -> Quote -> QuoteVersion -> QuoteItem`
+
+Implemented on `sprint-2/pricing-quotes`:
+- `modules/pricing`
+- `modules/quotes`
+- `price_calculations` + `cost_components`
+- `quotes` + immutable `quote_versions` + `quote_items`
+- SQL migration `0002_pricing_quotes.sql`
+- exact fixed-scale 4-decimal monetary arithmetic backed by BigInt
+- pricing algorithm version `cost-plus-margin-v1`
+- explicit cost-component categories: MATERIAL, LABOR, MACHINE, OUTSOURCING, TRANSPORT, PACKAGING, FINISH, OTHER
+- PriceCalculation pinned to exact ConfigurationVersion ID + number
+- pricing input/output snapshots for historical explainability
+- Quote DRAFT created from one current PriceCalculation
+- QuoteVersion snapshots retain price, estimated cost, margin, pricing evidence and configuration version
+- QuoteItem snapshots retain configured product, quantity and commercial/economic values
+- `QUOTE.STALE_PRICE_CALCULATION` guard when Configuration changed after pricing
+- `QUOTE.VERSION_CONFLICT` optimistic guard for concurrent quote revision
+- quote revision appends v2/v3 rather than overwriting history
+- quote currency preserved across revisions
+- RBAC permissions for pricing and quotes
+- organization-scoped pricing/quote reads
+- pricing and quote HTTP APIs
+- Command Center UI through Configuration -> Pricing -> Draft Quote
+- exact-arithmetic unit tests
+- full Sprint 2 API E2E test
+- refreshed pnpm lockfile and frozen-lockfile CI
+
+## Sprint 2 validation
+The CI path has demonstrated:
 - `pnpm install --frozen-lockfile`
-- PostgreSQL migrations `0000` and `0001`
-- development seed
+- migrations `0000`, `0001`, `0002`
+- development seed including new RBAC permissions
 - module-boundary lint
 - TypeScript typecheck
-- CRM integration tests
-- Sprint 0 Lead API E2E tests
-- Sprint 1 sales/configuration API E2E tests
-- production build including the updated admin surface
+- existing Sprint 0 / Sprint 1 tests
+- pricing arithmetic tests
+- Pricing/Quote API E2E tests
+- production build
 
-The Sprint 1 E2E test verifies that:
-1. an Opportunity can only be created from a Lead visible to the active organization,
-2. Opportunity creation emits audit + domain event + outbox intent,
-3. catalog Product/Option definitions are organization-scoped,
-4. Configuration v1 can be incomplete without corrupting truth,
-5. Configuration v2 retains v1 and can become `READY_FOR_PRICING`,
-6. invalid dimensions are rejected by stable domain error code,
-7. another organization receives safe `404` boundaries rather than cross-tenant data.
+Sprint 2 tests prove:
+1. 7,500.0000 cost at 40% target margin gives 12,500.0000 without floating-point drift,
+2. PriceCalculation is pinned to Configuration v1,
+3. Quote v1 stores a commercial/economic snapshot,
+4. Configuration revision to v2 makes v1 pricing stale for any new Quote version,
+5. stale pricing is rejected with `QUOTE.STALE_PRICE_CALCULATION`,
+6. repricing v2 allows Quote v2 while Quote v1 remains unchanged,
+7. malformed money is rejected through the structured validation boundary,
+8. another organization receives safe 404 boundaries for pricing/quote data.
 
 ## Security / isolation decisions enforced
 - Business reads require explicit `organizationId`.
-- Lead, Opportunity, Product and Configuration lookups filter by organization + entity identity.
-- Development auth requires explicit user + organization headers and validates membership.
-- `AUTH_MODE=development` cannot start when `NODE_ENV=production`.
-- RBAC permissions gate reads/writes per domain.
-- Audit/event records retain organization, actor and correlation context.
-- Cross-organization isolation is covered at database/service and HTTP E2E levels.
+- Lead, Opportunity, Product, Configuration, PriceCalculation and Quote lookup boundaries are organization-scoped.
+- Development auth validates active organization membership and cannot run in production.
+- RBAC gates each implemented business domain.
+- Audit/domain events carry organization, actor and correlation context.
+- Critical Pricing/Quote writes share one Unit of Work with audit + event/outbox persistence.
 
 ## Deliberate current limitations
 1. External production identity provider is not selected/connected yet; production rejects development auth mode.
-2. Outbox persistence exists; publisher/worker delivery is a later slice. No fake delivery guarantee is claimed.
-3. Observability is limited to health/readiness, correlation IDs and CI diagnostics; production telemetry comes later.
-4. Pricing/Quote source of truth is not implemented yet.
-5. AI may not execute business actions yet; the AI Product Configurator remains a strategic surface built on top of these sources of truth.
-6. Customer-facing visualization/photo placement and room-scene analysis are not implemented yet.
+2. Outbox persistence exists; publisher/worker delivery is not implemented yet.
+3. Production observability is not implemented beyond health/readiness, correlation IDs and CI diagnostics.
+4. Quotes are **internal DRAFTS only**. Tax/VAT policy, discounts, approvals, READY/SENT/VIEWED/ACCEPTED transitions and documents are intentionally not claimed yet.
+5. Quote numbering is collision-resistant MVP (`Q-YYYY-<UUID8>`), not a final fiscal/legal numbering policy.
+6. AI may not autonomously price or bind the business to price/date commitments.
+7. Customer-facing room photo analysis, visualization and customer portal are not implemented yet.
+8. Capacity/availability truth is not implemented; the system must not promise production/delivery dates from guesswork.
 
 ## Customer-facing strategic pillar
-The AI Product Configurator is a first-class system surface, not a marketing toy. The current Configuration model is its source-of-truth foundation. Customer UX, AI assistance, room-photo analysis, visualization, availability and pricing must call controlled domain services rather than maintain a separate configuration truth.
+The AI Product Configurator remains a first-class system surface. Product/Configuration/Pricing are now stable enough to begin the first customer-facing slice without creating a parallel truth model. AI/visualization will operate through controlled services and versioned Configuration rather than writing arbitrary commercial state.
 
 ## Future partner network
 Core remains organization-aware to preserve the path to Partner Organizations, capability registry, Work Orders, scoped partner portal and distributed manufacturing orchestration.
 
 ## Next engineering sequence
-1. Merge PR #2 after the final documentation-triggered CI is green.
-2. Start Sprint 2: Pricing + Quote source of truth.
-3. Introduce `PriceCalculation`, `CostComponent`, `Quote`, immutable `QuoteVersion` and `QuoteItem` with margin/approval guards.
-4. Connect Configuration -> PriceCalculation -> Quote without duplicating configuration truth.
-5. Then build the first customer-facing configurator slice on top of Product/Configuration/Pricing services.
-6. Add availability/capacity estimates before making customer delivery-date promises.
+1. Merge PR #3 only after final CI is green.
+2. Sprint 3: commercial policy around Quote — discount/margin approval, tax/VAT calculation policy and controlled Quote transitions up to READY.
+3. Introduce a document representation for Quote without making PDF the source of truth.
+4. Add customer-facing read/approve boundaries only after visibility rules are explicit.
+5. In parallel, prepare the first customer configurator application on Product/Configuration/Pricing services.
+6. Before customer delivery promises, implement BusinessCalendar + capacity/availability estimate source of truth.
+7. Then extend toward Order creation from accepted Quote.
 
 ## Project memory rule
 GitHub documentation is the durable project memory. Material architectural/product decisions must be reflected in repository docs rather than relying on chat history alone.

@@ -31,6 +31,13 @@ export const optionDataType = pgEnum('product_option_data_type', ['NUMBER', 'TEX
 export const configurationStatus = pgEnum('configuration_status', [
   'DRAFT', 'INCOMPLETE', 'READY_FOR_PRICING', 'PRICED', 'CUSTOMER_REVIEW', 'APPROVED', 'LOCKED', 'SUPERSEDED', 'ARCHIVED',
 ]);
+export const costComponentType = pgEnum('cost_component_type', [
+  'MATERIAL', 'LABOR', 'MACHINE', 'OUTSOURCING', 'TRANSPORT', 'PACKAGING', 'FINISH', 'OTHER',
+]);
+export const quoteStatus = pgEnum('quote_status', [
+  'DRAFT', 'INTERNAL_REVIEW', 'READY', 'SENT', 'VIEWED', 'NEGOTIATION', 'ACCEPTED', 'DECLINED',
+  'EXPIRED', 'WITHDRAWN', 'REVISION_REQUIRED', 'SUPERSEDED',
+]);
 export const actorType = pgEnum('actor_type', ['USER', 'AI_AGENT', 'SYSTEM', 'INTEGRATION', 'CUSTOMER', 'PARTNER']);
 export const outboxStatus = pgEnum('outbox_status', ['PENDING', 'PUBLISHED', 'FAILED']);
 
@@ -192,6 +199,95 @@ export const configurationVersions = pgTable('configuration_versions', {
   uniqueIndex('configuration_versions_number_uidx').on(table.configurationId, table.versionNumber),
   index('configuration_versions_org_config_idx').on(table.organizationId, table.configurationId),
 ]);
+
+export const priceCalculations = pgTable('price_calculations', {
+  id: uuid('id').primaryKey(),
+  organizationId: uuid('organization_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+  configurationId: uuid('configuration_id').notNull().references(() => configurations.id),
+  configurationVersionId: uuid('configuration_version_id').notNull().references(() => configurationVersions.id),
+  configurationVersionNumber: integer('configuration_version_number').notNull(),
+  currency: varchar('currency', { length: 3 }).notNull(),
+  algorithmVersion: varchar('algorithm_version', { length: 120 }).notNull(),
+  targetMarginBps: integer('target_margin_bps').notNull(),
+  totalCost: numeric('total_cost', { precision: 19, scale: 4 }).notNull(),
+  recommendedPrice: numeric('recommended_price', { precision: 19, scale: 4 }).notNull(),
+  inputSnapshot: jsonb('input_snapshot').notNull(),
+  outputSnapshot: jsonb('output_snapshot').notNull(),
+  createdByUserId: uuid('created_by_user_id').references(() => users.id),
+  createdByAi: boolean('created_by_ai').notNull().default(false),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index('price_calculations_org_config_version_idx').on(table.organizationId, table.configurationId, table.configurationVersionNumber),
+  index('price_calculations_org_created_idx').on(table.organizationId, table.createdAt),
+]);
+
+export const costComponents = pgTable('cost_components', {
+  id: uuid('id').primaryKey(),
+  organizationId: uuid('organization_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+  priceCalculationId: uuid('price_calculation_id').notNull().references(() => priceCalculations.id, { onDelete: 'cascade' }),
+  componentType: costComponentType('component_type').notNull(),
+  label: varchar('label', { length: 255 }).notNull(),
+  amount: numeric('amount', { precision: 19, scale: 4 }).notNull(),
+  metadata: jsonb('metadata'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [index('cost_components_org_calculation_idx').on(table.organizationId, table.priceCalculationId)]);
+
+export const quotes = pgTable('quotes', {
+  id: uuid('id').primaryKey(),
+  organizationId: uuid('organization_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+  opportunityId: uuid('opportunity_id').notNull().references(() => opportunities.id),
+  configurationId: uuid('configuration_id').notNull().references(() => configurations.id),
+  quoteNumber: varchar('quote_number', { length: 80 }).notNull(),
+  status: quoteStatus('status').notNull().default('DRAFT'),
+  currency: varchar('currency', { length: 3 }).notNull(),
+  currentVersion: integer('current_version').notNull().default(1),
+  createdByUserId: uuid('created_by_user_id').references(() => users.id),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  uniqueIndex('quotes_org_number_uidx').on(table.organizationId, table.quoteNumber),
+  index('quotes_org_opportunity_idx').on(table.organizationId, table.opportunityId),
+  index('quotes_org_status_idx').on(table.organizationId, table.status),
+]);
+
+export const quoteVersions = pgTable('quote_versions', {
+  id: uuid('id').primaryKey(),
+  organizationId: uuid('organization_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+  quoteId: uuid('quote_id').notNull().references(() => quotes.id, { onDelete: 'cascade' }),
+  versionNumber: integer('version_number').notNull(),
+  priceCalculationId: uuid('price_calculation_id').notNull().references(() => priceCalculations.id),
+  configurationVersionNumber: integer('configuration_version_number').notNull(),
+  subtotal: numeric('subtotal', { precision: 19, scale: 4 }).notNull(),
+  discountAmount: numeric('discount_amount', { precision: 19, scale: 4 }).notNull().default('0'),
+  taxAmount: numeric('tax_amount', { precision: 19, scale: 4 }).notNull().default('0'),
+  total: numeric('total', { precision: 19, scale: 4 }).notNull(),
+  estimatedCost: numeric('estimated_cost', { precision: 19, scale: 4 }).notNull(),
+  marginAmount: numeric('margin_amount', { precision: 19, scale: 4 }).notNull(),
+  marginBps: integer('margin_bps').notNull(),
+  pricingSnapshot: jsonb('pricing_snapshot').notNull(),
+  reason: text('reason'),
+  validUntil: date('valid_until'),
+  createdByUserId: uuid('created_by_user_id').references(() => users.id),
+  createdByAi: boolean('created_by_ai').notNull().default(false),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  uniqueIndex('quote_versions_number_uidx').on(table.quoteId, table.versionNumber),
+  index('quote_versions_org_quote_idx').on(table.organizationId, table.quoteId),
+]);
+
+export const quoteItems = pgTable('quote_items', {
+  id: uuid('id').primaryKey(),
+  organizationId: uuid('organization_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+  quoteVersionId: uuid('quote_version_id').notNull().references(() => quoteVersions.id, { onDelete: 'cascade' }),
+  productId: uuid('product_id').notNull().references(() => products.id),
+  configurationId: uuid('configuration_id').notNull().references(() => configurations.id),
+  description: varchar('description', { length: 500 }).notNull(),
+  quantity: integer('quantity').notNull().default(1),
+  unitPrice: numeric('unit_price', { precision: 19, scale: 4 }).notNull(),
+  lineTotal: numeric('line_total', { precision: 19, scale: 4 }).notNull(),
+  estimatedCost: numeric('estimated_cost', { precision: 19, scale: 4 }).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [index('quote_items_org_version_idx').on(table.organizationId, table.quoteVersionId)]);
 
 export const domainEvents = pgTable('domain_events', {
   id: uuid('id').primaryKey(),
