@@ -35,7 +35,15 @@ function Resolve-ClusterId([string]$RequestedId, [string]$RequestedName) {
     throw "Could not list Managed Postgres clusters. Run 'fly auth logout' and 'fly auth login' if your flyctl session is old."
   }
 
-  $clusters = $json | ConvertFrom-Json
+  $parsed = $json | ConvertFrom-Json
+  $clusters = if ($parsed -is [System.Array]) {
+    $parsed
+  } elseif ($null -ne $parsed.clusters) {
+    $parsed.clusters
+  } else {
+    @($parsed)
+  }
+
   $cluster = $clusters | Where-Object { $_.name -eq $RequestedName } | Select-Object -First 1
   if (-not $cluster) {
     throw "Managed Postgres cluster '$RequestedName' was not found. Create it in Fly first or pass -ClusterId explicitly."
