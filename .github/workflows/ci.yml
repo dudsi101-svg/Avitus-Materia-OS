@@ -1,0 +1,39 @@
+name: CI
+on:
+  pull_request:
+  push:
+    branches: [main]
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: avitus
+          POSTGRES_PASSWORD: avitus
+          POSTGRES_DB: avitus
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U avitus -d avitus"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      NODE_ENV: test
+      AUTH_MODE: development
+      DATABASE_URL: postgres://avitus:avitus@localhost:5432/avitus
+      ADMIN_ORIGIN: http://localhost:3000
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: corepack enable
+      - run: pnpm install --no-frozen-lockfile
+      - run: pnpm db:migrate
+      - run: pnpm db:seed:dev
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm build
