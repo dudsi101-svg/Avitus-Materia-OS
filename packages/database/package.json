@@ -9,7 +9,8 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run --passWithNoTests",
     "migrate": "tsx src/migrate.ts",
-    "seed:dev": "tsx src/seed-dev.ts"
+    "seed:dev": "tsx src/seed-dev.ts",
+    "bootstrap:prod": "tsx src/bootstrap-prod.ts"
   },
   "dependencies": {
     "@avitus/shared": "workspace:*",
