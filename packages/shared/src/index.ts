@@ -59,3 +59,15 @@ export class DomainError extends Error {
     this.name = 'DomainError';
   }
 }
+
+export interface DomainErrorLike extends Error {
+  readonly name: 'DomainError';
+  readonly code: string;
+  readonly details?: Record<string, unknown>;
+}
+
+export function isDomainError(error: unknown): error is DomainErrorLike {
+  if (!(error instanceof Error)) return false;
+  const candidate = error as Error & { code?: unknown; details?: unknown };
+  return candidate.name === 'DomainError' && typeof candidate.code === 'string';
+}
