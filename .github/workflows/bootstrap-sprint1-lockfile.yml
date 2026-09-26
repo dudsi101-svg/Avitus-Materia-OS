@@ -1,0 +1,35 @@
+name: Bootstrap Sprint 1 lockfile
+
+on:
+  push:
+    branches: [sprint-1/sales-foundation]
+    paths-ignore:
+      - pnpm-lock.yaml
+
+permissions:
+  contents: write
+
+jobs:
+  lockfile:
+    if: ${{ github.actor != 'github-actions[bot]' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: sprint-1/sales-foundation
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: corepack enable
+      - run: pnpm install --lockfile-only --no-frozen-lockfile
+      - name: Commit lockfile if changed
+        run: |
+          if git diff --quiet -- pnpm-lock.yaml; then
+            echo "Lockfile already current."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add pnpm-lock.yaml
+          git commit -m "build: refresh pnpm lockfile for Sprint 1"
+          git push origin HEAD:sprint-1/sales-foundation
