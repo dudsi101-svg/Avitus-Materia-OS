@@ -47,7 +47,7 @@ Skrypt sam:
 - znajdzie `avitus-materia-db`,
 - utworzy `avitus-materia-api` i `avitus-materia-web`, jeśli jeszcze nie istnieją,
 - podepnie Managed Postgres do API i ustawi `DATABASE_URL`,
-- wygeneruje stabilny UUID organizacji produkcyjnej,
+- użyje stałego UUID produkcyjnej organizacji Avitus Materia, dzięki czemu ponowne uruchomienie jest bezpieczne,
 - wygeneruje mocny sekret formularza bez zapisywania go na dysku,
 - ustawi sekrety API i web,
 - skonfiguruje prywatne połączenie web -> API przez `.internal`,
@@ -74,12 +74,12 @@ Repo zawiera `.github/workflows/deploy-fly.yml`, ale deployment jest domyślnie 
 
 Po udanym pierwszym wdrożeniu ręcznym:
 
-1. W Fly wygeneruj deployment token.
+1. W Fly wygeneruj **organization-scoped token** (`fly tokens create org`). Jeden token musi mieć dostęp do obu aplikacji Avitus w tej samej organizacji.
 2. W GitHub -> Settings -> Secrets and variables -> Actions dodaj secret `FLY_API_TOKEN`.
 3. W GitHub -> Actions variables dodaj `FLY_DEPLOY_ENABLED=true`.
 4. Opcjonalnie ustaw `FLY_API_APP` i `FLY_WEB_APP`, jeśli nazwy różnią się od domyślnych.
 
-Od tej chwili udany CI na `main` uruchomi deployment API, sprawdzi `/ready`, a potem wdroży web.
+Od tej chwili udany CI na `main` uruchomi deployment API, sprawdzi `/ready`, a potem wdroży web. Token pozostaje wyłącznie w GitHub Actions Secrets.
 
 ## Krok 5 — domena home.pl
 
