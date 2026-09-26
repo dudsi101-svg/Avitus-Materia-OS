@@ -1,6 +1,14 @@
 {
   "$schema": "https://turbo.build/schema.json",
-  "globalEnv": ["NODE_ENV", "AUTH_MODE", "DATABASE_URL", "ADMIN_ORIGIN"],
+  "globalEnv": [
+    "NODE_ENV",
+    "AUTH_MODE",
+    "DATABASE_URL",
+    "ADMIN_ORIGIN",
+    "PUBLIC_INQUIRY_ORGANIZATION_ID",
+    "PUBLIC_INQUIRY_API_KEY",
+    "AVITUS_API_URL"
+  ],
   "tasks": {
     "build": { "dependsOn": ["^build"], "outputs": ["dist/**", ".next/**", "!.next/cache/**"] },
     "dev": { "cache": false, "persistent": true },
