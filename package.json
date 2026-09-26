@@ -7,7 +7,7 @@
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev --parallel",
-    "lint": "node scripts/verify-boundaries.mjs",
+    "lint": "node scripts/verify-boundaries.mjs && node scripts/verify-coordination.mjs",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "typecheck": "turbo run typecheck",

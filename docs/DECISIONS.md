@@ -133,6 +133,13 @@ Keep web and API as separate Fly Apps so they can be deployed/scaled independent
 
 Default nearby European region for Poland is `fra` (Frankfurt), because Fly's former Warsaw `waw` region was deprecated. API and primary database should remain co-located in the same region.
 
+## DD-023 — Coordination protocol and shared-identifier reservations
+**Status:** Accepted
+
+Parallel agent lanes must claim work and reserve shared sequential identifiers (migration numbers, `DD-NNN` IDs, sprint numbers) in `docs/WORK_BOARD.md` before coding, following `docs/COORDINATION.md`. `pnpm lint` runs `scripts/verify-coordination.mjs`, which rejects duplicate migration prefixes and duplicate decision IDs.
+
+Reason: two parallel "Sprint 3" lanes collided on migration `0003`, `DD-022`, the sprint document and composition-root files because no repository channel announced active work.
+
 ## Open decisions for Technical Architecture v0.4
 - Authentication provider
 - Object storage provider
