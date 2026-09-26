@@ -24,6 +24,10 @@ const permissionSeeds = [
   ['44444444-4444-4444-8444-444444444446', 'catalog.product.read', 'Read product catalog'],
   ['44444444-4444-4444-8444-444444444447', 'configurator.configuration.read', 'Read configurations'],
   ['55555555-5555-4555-8555-555555555557', 'configurator.configuration.write', 'Create and revise configurations'],
+  ['44444444-4444-4444-8444-444444444448', 'pricing.calculation.read', 'Read price calculations'],
+  ['55555555-5555-4555-8555-555555555558', 'pricing.calculation.create', 'Create price calculations'],
+  ['44444444-4444-4444-8444-444444444449', 'quote.read', 'Read quotes'],
+  ['55555555-5555-4555-8555-555555555559', 'quote.create', 'Create and revise draft quotes'],
 ] as const;
 
 const DEV_FAMILY_ID = '66666666-6666-4666-8666-666666666666';
