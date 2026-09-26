@@ -1,4 +1,4 @@
-import { timingSafeEqual } from 'node:crypto';
+import { randomUUID, timingSafeEqual } from 'node:crypto';
 import {
   Body,
   Controller,
@@ -43,7 +43,7 @@ export class PublicInquiriesController {
     }
 
     const context: RequestContext = {
-      correlationId: request.correlationId ?? crypto.randomUUID(),
+      correlationId: request.correlationId ?? randomUUID(),
       organizationId,
       actor: { type: 'INTEGRATION', id: PUBLIC_WEB_ACTOR_ID },
       permissions: new Set(['acquisition.public_inquiry.create']),
