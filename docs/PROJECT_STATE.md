@@ -1,8 +1,8 @@
 # Avitus Materia OS — Project State
 
-**Checkpoint:** 1 — Sprint 0 foundation
+**Checkpoint:** 1 — Sprint 0 foundation validated
 **Date:** 2026-09-26
-**Status:** Implementation started on branch `sprint-0/core-foundation`
+**Status:** Sprint 0 implementation complete on branch `sprint-0/core-foundation`; PR #1 awaiting final frozen-lockfile CI and merge.
 
 ## Identity
 - Brand: **Avitus Materia**
@@ -36,13 +36,14 @@ Core principle:
 - development-only auth adapter that is forbidden in production
 - no arbitrary AI database access
 
-## Sprint 0 vertical slice implemented
-Target flow:
+## Sprint 0 vertical slice
+Validated flow:
 
-`Authenticated development user -> Organization context -> Create/List Lead -> AuditEvent + LeadCreated DomainEvent + OutboxEvent -> Admin UI`
+`Authenticated development user -> Organization context -> Create/List/Read Lead -> AuditEvent + LeadCreated DomainEvent + OutboxEvent -> Admin UI`
 
 Implemented on `sprint-0/core-foundation`:
 - pnpm workspace + Turborepo
+- committed `pnpm-lock.yaml` for reproducible installs
 - strict TypeScript baseline
 - `apps/api` NestJS API
 - `apps/admin` Next.js minimal Command Center
@@ -62,40 +63,57 @@ Implemented on `sprint-0/core-foundation`:
 - audit record created in the same Unit of Work
 - correlation IDs and structured HTTP error shape
 - health/readiness endpoints
-- tenant-isolation integration test foundation
-- GitHub Actions CI definition
+- tenant-isolation integration test
+- API E2E test covering Lead creation, audit/event/outbox persistence, organization isolation and structured validation errors
+- GitHub Actions CI
 - local Docker PostgreSQL
 - local-development instructions
 - basic module-boundary verification script
 
-## Security / isolation decisions already enforced
+## Validation completed
+CI has demonstrated successful execution of:
+- dependency installation
+- PostgreSQL migration
+- development seed
+- module-boundary lint
+- TypeScript typecheck
+- CRM unit/integration tests
+- API E2E tests
+- production build
+
+During validation the tests found and drove fixes for:
+1. workspace build ordering before typecheck,
+2. environment propagation into Turborepo test processes,
+3. reliable DomainError classification across package/bundle boundaries,
+4. cross-organization Lead lookup behavior returning a safe `404` instead of exposing another organization's data.
+
+## Security / isolation decisions enforced
 - Business reads require explicit `organizationId`.
 - Lead lookups filter by both organization and entity ID.
 - Development auth requires explicit user + organization headers and validates membership.
 - `AUTH_MODE=development` cannot start when `NODE_ENV=production`.
 - Lead creation checks `crm.lead.write`; reads check `crm.lead.read`.
 - Audit/event records retain organization, actor and correlation context.
+- Cross-organization Lead list/read isolation is covered by database integration and HTTP E2E tests.
 
-## Known bootstrap limitations
-1. `pnpm-lock.yaml` has not yet been generated because the current execution environment has no npm-registry network access. CI temporarily uses `pnpm install --no-frozen-lockfile`. The first environment with registry access must generate/commit the lockfile and switch CI to `--frozen-lockfile`.
-2. External production identity provider is intentionally not selected/connected yet. Production startup rejects the development auth mode.
-3. Full API E2E coverage is still to be added after dependencies can be installed and the application can be executed in an internet-enabled/Codespaces environment.
-4. Outbox persistence exists; publisher/worker delivery is a later slice. No fake delivery guarantee is claimed.
+## Deliberate Sprint 0 limitations
+1. External production identity provider is intentionally not selected/connected yet. Production startup rejects the development auth mode.
+2. Outbox persistence exists; publisher/worker delivery is a later slice. No fake delivery guarantee is claimed.
+3. Observability is currently limited to health/readiness, correlation IDs and CI diagnostics; production telemetry comes later.
+4. No AI agent or customer configurator execution is included in Sprint 0.
 
 ## Customer-facing strategic pillar
-The AI Product Configurator remains a first-class system surface, but is intentionally outside Sprint 0 implementation. Its domain/UX direction remains documented and will follow the Lead/Opportunity foundation.
+The AI Product Configurator remains a first-class system surface. Its domain/UX direction is documented and will follow the Lead/Opportunity/Configuration sales foundation rather than bypassing source-of-truth modeling.
 
 ## Future partner network
 Core remains organization-aware to preserve the path to Partner Organizations, capability registry, Work Orders, scoped partner portal and distributed manufacturing orchestration.
 
 ## Next engineering sequence
-1. Run/install Sprint 0 dependencies in Codespaces or another registry-enabled environment.
-2. Generate and commit `pnpm-lock.yaml`.
-3. Execute migration, seed, typecheck, tests and build; fix all findings before merge.
-4. Add API-level E2E test for create/list + organization isolation.
-5. Merge Sprint 0 after CI is green.
-6. Start Sprint 1 vertical slice: `Lead -> Opportunity -> Configuration`.
-7. Then introduce pricing/quote versioning, followed by configurator/customer experience.
+1. Complete final CI using the committed lockfile with `pnpm install --frozen-lockfile`.
+2. Merge PR #1 only after that CI is green.
+3. Start Sprint 1 on a fresh branch with vertical slice `Lead -> Opportunity -> Configuration`.
+4. Introduce quote/pricing versioning after the configuration foundation.
+5. Build the first customer-facing configurator slice on top of those stable sources of truth.
 
 ## Project memory rule
 GitHub documentation is the durable project memory. Material architectural/product decisions must be reflected in repository docs rather than relying on chat history alone.
