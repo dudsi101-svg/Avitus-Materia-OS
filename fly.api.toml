@@ -1,0 +1,28 @@
+app = "avitus-materia-api"
+primary_region = "fra"
+
+[build]
+  dockerfile = "Dockerfile.api"
+
+[deploy]
+  release_command = "sh -lc 'pnpm db:migrate && pnpm db:bootstrap:prod'"
+
+[env]
+  NODE_ENV = "production"
+  AUTH_MODE = "external"
+  PORT = "4000"
+  ADMIN_ORIGIN = "https://avitus-materia.com"
+
+[http_service]
+  internal_port = 4000
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [[http_service.checks]]
+    interval = "15s"
+    timeout = "5s"
+    grace_period = "30s"
+    method = "GET"
+    path = "/ready"
