@@ -57,9 +57,15 @@ importers:
       '@avitus/audit':
         specifier: workspace:*
         version: link:../../modules/audit
+      '@avitus/catalog':
+        specifier: workspace:*
+        version: link:../../modules/catalog
       '@avitus/config':
         specifier: workspace:*
         version: link:../../packages/config
+      '@avitus/configurator':
+        specifier: workspace:*
+        version: link:../../modules/configurator
       '@avitus/crm':
         specifier: workspace:*
         version: link:../../modules/crm
@@ -130,6 +136,59 @@ importers:
       '@avitus/shared':
         specifier: workspace:*
         version: link:../../packages/shared
+    devDependencies:
+      typescript:
+        specifier: ^5.8.3
+        version: 5.9.3
+      vitest:
+        specifier: ^3.2.4
+        version: 3.2.7(@types/node@22.20.4)(tsx@4.23.15)
+
+  modules/catalog:
+    dependencies:
+      '@avitus/database':
+        specifier: workspace:*
+        version: link:../../packages/database
+      '@avitus/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
+      drizzle-orm:
+        specifier: ^0.44.5
+        version: 0.44.7(@types/pg@8.23.1)(pg@8.23.0)
+    devDependencies:
+      typescript:
+        specifier: ^5.8.3
+        version: 5.9.3
+      vitest:
+        specifier: ^3.2.4
+        version: 3.2.7(@types/node@22.20.4)(tsx@4.23.15)
+
+  modules/configurator:
+    dependencies:
+      '@avitus/audit':
+        specifier: workspace:*
+        version: link:../audit
+      '@avitus/catalog':
+        specifier: workspace:*
+        version: link:../catalog
+      '@avitus/crm':
+        specifier: workspace:*
+        version: link:../crm
+      '@avitus/database':
+        specifier: workspace:*
+        version: link:../../packages/database
+      '@avitus/events':
+        specifier: workspace:*
+        version: link:../events
+      '@avitus/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
+      drizzle-orm:
+        specifier: ^0.44.5
+        version: 0.44.7(@types/pg@8.23.1)(pg@8.23.0)
+      zod:
+        specifier: ^4.1.0
+        version: 4.6.5
     devDependencies:
       typescript:
         specifier: ^5.8.3
