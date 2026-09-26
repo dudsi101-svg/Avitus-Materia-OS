@@ -20,11 +20,24 @@ import { createDatabase, PostgresUnitOfWork } from '@avitus/database';
 import { PostgresAuditStore } from '@avitus/audit';
 import { PostgresDomainEventStore } from '@avitus/events';
 import { PostgresIdentityRepository } from '@avitus/iam';
+import {
+  CreatePriceCalculationService,
+  PostgresPriceCalculationRepository,
+  ReadPriceCalculationService,
+} from '@avitus/pricing';
+import {
+  CreateQuoteService,
+  PostgresQuoteRepository,
+  ReadQuoteService,
+  ReviseQuoteService,
+} from '@avitus/quotes';
 import { CatalogController } from './catalog.controller';
 import { ConfigurationsController } from './configurations.controller';
 import { CrmController } from './crm.controller';
 import { HealthController } from './health.controller';
 import { OpportunitiesController } from './opportunities.controller';
+import { PricingController } from './pricing.controller';
+import { QuotesController } from './quotes.controller';
 import { CorrelationMiddleware, DevelopmentAuthGuard } from './request-context';
 import { HttpErrorFilter } from './http-error.filter';
 import { TOKENS } from './tokens';
@@ -35,6 +48,8 @@ const leadRepository = new PostgresLeadRepository(connection.db);
 const opportunityRepository = new PostgresOpportunityRepository(connection.db);
 const productRepository = new PostgresProductRepository(connection.db);
 const configurationRepository = new PostgresConfigurationRepository(connection.db);
+const priceCalculationRepository = new PostgresPriceCalculationRepository(connection.db);
+const quoteRepository = new PostgresQuoteRepository(connection.db);
 const identityRepository = new PostgresIdentityRepository(connection.db);
 const uow = new PostgresUnitOfWork(connection.db);
 const auditStore = new PostgresAuditStore(connection.db);
@@ -47,6 +62,8 @@ const eventStore = new PostgresDomainEventStore(connection.db);
     OpportunitiesController,
     CatalogController,
     ConfigurationsController,
+    PricingController,
+    QuotesController,
   ],
   providers: [
     { provide: TOKENS.config, useValue: config },
@@ -57,6 +74,8 @@ const eventStore = new PostgresDomainEventStore(connection.db);
     { provide: TOKENS.opportunityRepository, useValue: opportunityRepository },
     { provide: TOKENS.productRepository, useValue: productRepository },
     { provide: TOKENS.configurationRepository, useValue: configurationRepository },
+    { provide: TOKENS.priceCalculationRepository, useValue: priceCalculationRepository },
+    { provide: TOKENS.quoteRepository, useValue: quoteRepository },
     {
       provide: TOKENS.createLeadService,
       useValue: new CreateLeadService(uow, leadRepository, eventStore, auditStore),
@@ -102,6 +121,46 @@ const eventStore = new PostgresDomainEventStore(connection.db);
       provide: TOKENS.readConfigurationService,
       useValue: new ReadConfigurationService(configurationRepository),
     },
+    {
+      provide: TOKENS.createPriceCalculationService,
+      useValue: new CreatePriceCalculationService(
+        uow,
+        configurationRepository,
+        priceCalculationRepository,
+        eventStore,
+        auditStore,
+      ),
+    },
+    {
+      provide: TOKENS.readPriceCalculationService,
+      useValue: new ReadPriceCalculationService(priceCalculationRepository),
+    },
+    {
+      provide: TOKENS.createQuoteService,
+      useValue: new CreateQuoteService(
+        uow,
+        opportunityRepository,
+        configurationRepository,
+        productRepository,
+        priceCalculationRepository,
+        quoteRepository,
+        eventStore,
+        auditStore,
+      ),
+    },
+    {
+      provide: TOKENS.reviseQuoteService,
+      useValue: new ReviseQuoteService(
+        uow,
+        configurationRepository,
+        productRepository,
+        priceCalculationRepository,
+        quoteRepository,
+        eventStore,
+        auditStore,
+      ),
+    },
+    { provide: TOKENS.readQuoteService, useValue: new ReadQuoteService(quoteRepository) },
     { provide: APP_GUARD, useClass: DevelopmentAuthGuard },
     { provide: APP_FILTER, useClass: HttpErrorFilter },
   ],
