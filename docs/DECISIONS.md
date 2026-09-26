@@ -117,6 +117,17 @@ Do not introduce Kubernetes, many microservices or other hyperscale infrastructu
 
 GitHub documentation is the durable shared memory for Claude, GPT/Codex and future agents. Material decisions must not live only in chat history.
 
+## DD-022 — Customer identity precedes Quote READY/SENT governance
+**Status:** Accepted
+
+A commercial Quote cannot truthfully become customer-ready unless the system has an authoritative buyer identity and contact context.
+
+Therefore `Person`, `Company`, `CustomerAccount` and `ContactPoint`, plus explicit sales links, are implemented before VAT/discount/approval and `READY/SENT` Quote transitions.
+
+Customer identity must not be represented only as free text in a Lead, Opportunity, message or Quote PDF. Quote governance will consume CustomerAccount as source of truth and will later snapshot buyer data into the legally/business-significant QuoteVersion representation.
+
+PII should not be copied unnecessarily into append-oriented audit/event payloads.
+
 ## Open decisions for Technical Architecture v0.4
 - Concrete frontend framework/runtime
 - Concrete backend framework/runtime
