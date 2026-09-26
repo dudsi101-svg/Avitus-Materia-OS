@@ -7,7 +7,8 @@ button, input, select { font: inherit; }
 .hero h1 { margin: 4px 0 8px; font-size: clamp(2rem, 5vw, 4rem); letter-spacing: -0.05em; }
 .eyebrow { text-transform: uppercase; letter-spacing: .14em; font-size: .76rem; font-weight: 700; }
 .status { border: 1px solid #b4b19f; border-radius: 999px; padding: 8px 12px; background: #fff; }
-.grid { display: grid; grid-template-columns: minmax(280px, .8fr) minmax(360px, 1.2fr); gap: 20px; }
+.grid, .commercialFlow { display: grid; grid-template-columns: minmax(280px, .8fr) minmax(360px, 1.2fr); gap: 20px; }
+.commercialFlow { margin-top: 20px; grid-template-columns: 1fr 1fr; }
 .panel { background: #fff; border: 1px solid #d8d6cc; border-radius: 18px; padding: 24px; box-shadow: 0 16px 40px rgba(0,0,0,.04); }
 .panel h2, .panel h3 { margin-top: 0; }
 .form { display: grid; gap: 16px; }
@@ -31,4 +32,4 @@ button.secondary { background: #eceae1; color: #171717; padding: 8px 10px; }
 .resultBox small { grid-column: 1 / -1; color: #757266; }
 .muted { color: #757266; }
 .error { color: #9a1b1b; background: #fff0f0; border-radius: 10px; padding: 10px; }
-@media (max-width: 760px) { .grid { grid-template-columns: 1fr; } .hero, .sectionHeading { flex-direction: column; align-items: flex-start; } }
+@media (max-width: 760px) { .grid, .commercialFlow { grid-template-columns: 1fr; } .hero, .sectionHeading { flex-direction: column; align-items: flex-start; } }
