@@ -1,8 +1,8 @@
 # Avitus Materia OS — Project State
 
-**Checkpoint:** 1 — Sprint 0 foundation validated
+**Checkpoint:** 2 — Sprint 1 sales foundation validated
 **Date:** 2026-09-26
-**Status:** Sprint 0 implementation complete on branch `sprint-0/core-foundation`; PR #1 awaiting final frozen-lockfile CI and merge.
+**Status:** Sprint 0 is merged to `main`. Sprint 1 is implemented on `sprint-1/sales-foundation`; PR #2 is awaiting final CI after documentation checkpoint and merge.
 
 ## Identity
 - Brand: **Avitus Materia**
@@ -22,7 +22,7 @@ Core principle:
 **DATA TRUTH -> AUTOMATION -> INTELLIGENCE**
 
 ## Architecture baseline
-- Monorepo + modular monolith
+- monorepo + modular monolith
 - TypeScript / Node.js
 - Next.js admin surface
 - NestJS API composition root
@@ -32,88 +32,107 @@ Core principle:
 - organization scoping from day one
 - RBAC foundation
 - append-oriented audit history
-- domain events + transactional PostgreSQL outbox foundation
-- development-only auth adapter that is forbidden in production
+- semantic domain events + transactional PostgreSQL outbox
+- development-only auth adapter forbidden in production
 - no arbitrary AI database access
+- configuration history is version/snapshot oriented rather than destructive overwrite
 
-## Sprint 0 vertical slice
+## Sprint 0 — merged foundation
 Validated flow:
 
-`Authenticated development user -> Organization context -> Create/List/Read Lead -> AuditEvent + LeadCreated DomainEvent + OutboxEvent -> Admin UI`
+`Authenticated development user -> Organization context -> Lead -> AuditEvent + LeadCreated DomainEvent + OutboxEvent -> Admin UI`
 
-Implemented on `sprint-0/core-foundation`:
+Sprint 0 established:
 - pnpm workspace + Turborepo
-- committed `pnpm-lock.yaml` for reproducible installs
+- reproducible `pnpm-lock.yaml`
 - strict TypeScript baseline
-- `apps/api` NestJS API
-- `apps/admin` Next.js minimal Command Center
-- `packages/config`
-- `packages/database`
-- `packages/shared`
-- `modules/iam`
-- `modules/crm`
-- `modules/audit`
-- `modules/events`
-- PostgreSQL migration runner
-- Sprint 0 database migration
-- development seed for Avitus Materia organization/user/permissions
-- organization-scoped Lead repository
-- `LeadCreated` domain event persistence
-- transactionally persisted outbox record
-- audit record created in the same Unit of Work
-- correlation IDs and structured HTTP error shape
+- NestJS API and Next.js admin
+- PostgreSQL migration runner and seed
+- organization/user/membership/RBAC foundation
+- organization-scoped Lead repository/services/API
+- domain events, audit and transactional outbox persistence
+- correlation IDs and structured HTTP errors
 - health/readiness endpoints
-- tenant-isolation integration test
-- API E2E test covering Lead creation, audit/event/outbox persistence, organization isolation and structured validation errors
-- GitHub Actions CI
-- local Docker PostgreSQL
-- local-development instructions
-- basic module-boundary verification script
+- tenant-isolation integration + API E2E coverage
+- GitHub Actions CI with frozen lockfile
+- module-boundary verification
+
+## Sprint 1 — sales/configuration source of truth
+Validated vertical slice:
+
+`Lead -> Opportunity -> Product -> Configuration -> ConfigurationVersion`
+
+Implemented on `sprint-1/sales-foundation`:
+- organization-scoped Opportunity domain and API
+- ProductFamily / Product / ProductOptionDefinition catalog foundation
+- organization-scoped catalog reads
+- versioned Configuration domain
+- immutable configuration snapshots
+- product-option validation for NUMBER / TEXT / ENUM / BOOLEAN
+- min/max/enum/unknown-option validation
+- readiness evaluation: `INCOMPLETE` vs `READY_FOR_PRICING`
+- OpportunityCreated and Configuration events
+- audit + domain event + outbox persistence inside the business Unit of Work
+- Sprint 1 SQL migration
+- development product/options seed for configurable custom table
+- RBAC permissions for Opportunity, Catalog and Configuration
+- API E2E path covering Lead -> Opportunity -> Configuration
+- cross-organization isolation for Lead/Opportunity/Product/Configuration
+- invalid configuration/range test coverage
+- admin Command Center surface for creating Opportunity and Product Configuration
+- refreshed lockfile and successful frozen-lockfile CI
 
 ## Validation completed
 CI has demonstrated successful execution of:
-- dependency installation
-- PostgreSQL migration
+- `pnpm install --frozen-lockfile`
+- PostgreSQL migrations `0000` and `0001`
 - development seed
 - module-boundary lint
 - TypeScript typecheck
-- CRM unit/integration tests
-- API E2E tests
-- production build
+- CRM integration tests
+- Sprint 0 Lead API E2E tests
+- Sprint 1 sales/configuration API E2E tests
+- production build including the updated admin surface
 
-During validation the tests found and drove fixes for:
-1. workspace build ordering before typecheck,
-2. environment propagation into Turborepo test processes,
-3. reliable DomainError classification across package/bundle boundaries,
-4. cross-organization Lead lookup behavior returning a safe `404` instead of exposing another organization's data.
+The Sprint 1 E2E test verifies that:
+1. an Opportunity can only be created from a Lead visible to the active organization,
+2. Opportunity creation emits audit + domain event + outbox intent,
+3. catalog Product/Option definitions are organization-scoped,
+4. Configuration v1 can be incomplete without corrupting truth,
+5. Configuration v2 retains v1 and can become `READY_FOR_PRICING`,
+6. invalid dimensions are rejected by stable domain error code,
+7. another organization receives safe `404` boundaries rather than cross-tenant data.
 
 ## Security / isolation decisions enforced
 - Business reads require explicit `organizationId`.
-- Lead lookups filter by both organization and entity ID.
+- Lead, Opportunity, Product and Configuration lookups filter by organization + entity identity.
 - Development auth requires explicit user + organization headers and validates membership.
 - `AUTH_MODE=development` cannot start when `NODE_ENV=production`.
-- Lead creation checks `crm.lead.write`; reads check `crm.lead.read`.
+- RBAC permissions gate reads/writes per domain.
 - Audit/event records retain organization, actor and correlation context.
-- Cross-organization Lead list/read isolation is covered by database integration and HTTP E2E tests.
+- Cross-organization isolation is covered at database/service and HTTP E2E levels.
 
-## Deliberate Sprint 0 limitations
-1. External production identity provider is intentionally not selected/connected yet. Production startup rejects the development auth mode.
+## Deliberate current limitations
+1. External production identity provider is not selected/connected yet; production rejects development auth mode.
 2. Outbox persistence exists; publisher/worker delivery is a later slice. No fake delivery guarantee is claimed.
-3. Observability is currently limited to health/readiness, correlation IDs and CI diagnostics; production telemetry comes later.
-4. No AI agent or customer configurator execution is included in Sprint 0.
+3. Observability is limited to health/readiness, correlation IDs and CI diagnostics; production telemetry comes later.
+4. Pricing/Quote source of truth is not implemented yet.
+5. AI may not execute business actions yet; the AI Product Configurator remains a strategic surface built on top of these sources of truth.
+6. Customer-facing visualization/photo placement and room-scene analysis are not implemented yet.
 
 ## Customer-facing strategic pillar
-The AI Product Configurator remains a first-class system surface. Its domain/UX direction is documented and will follow the Lead/Opportunity/Configuration sales foundation rather than bypassing source-of-truth modeling.
+The AI Product Configurator is a first-class system surface, not a marketing toy. The current Configuration model is its source-of-truth foundation. Customer UX, AI assistance, room-photo analysis, visualization, availability and pricing must call controlled domain services rather than maintain a separate configuration truth.
 
 ## Future partner network
 Core remains organization-aware to preserve the path to Partner Organizations, capability registry, Work Orders, scoped partner portal and distributed manufacturing orchestration.
 
 ## Next engineering sequence
-1. Complete final CI using the committed lockfile with `pnpm install --frozen-lockfile`.
-2. Merge PR #1 only after that CI is green.
-3. Start Sprint 1 on a fresh branch with vertical slice `Lead -> Opportunity -> Configuration`.
-4. Introduce quote/pricing versioning after the configuration foundation.
-5. Build the first customer-facing configurator slice on top of those stable sources of truth.
+1. Merge PR #2 after the final documentation-triggered CI is green.
+2. Start Sprint 2: Pricing + Quote source of truth.
+3. Introduce `PriceCalculation`, `CostComponent`, `Quote`, immutable `QuoteVersion` and `QuoteItem` with margin/approval guards.
+4. Connect Configuration -> PriceCalculation -> Quote without duplicating configuration truth.
+5. Then build the first customer-facing configurator slice on top of Product/Configuration/Pricing services.
+6. Add availability/capacity estimates before making customer delivery-date promises.
 
 ## Project memory rule
 GitHub documentation is the durable project memory. Material architectural/product decisions must be reflected in repository docs rather than relying on chat history alone.
