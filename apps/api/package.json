@@ -11,6 +11,7 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
+    "@avitus/acquisition": "workspace:*",
     "@avitus/audit": "workspace:*",
     "@avitus/catalog": "workspace:*",
     "@avitus/config": "workspace:*",
