@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import type { AuditStore } from '@avitus/audit';
-import { leads, executorFrom, type DbExecutor } from '@avitus/database';
+import { executorFrom, leads, opportunities, type DbExecutor } from '@avitus/database';
 import type { DomainEventStore } from '@avitus/events';
 import {
   DomainError,
@@ -194,5 +194,205 @@ export class ReadLeadService {
     const lead = await this.leads.findById(context.organizationId, leadId);
     if (!lead) throw new DomainError('CRM.LEAD_NOT_FOUND', 'Lead was not found.');
     return lead;
+  }
+}
+
+export const createOpportunitySchema = z.object({
+  leadId: z.string().uuid(),
+  title: z.string().trim().min(1).max(255),
+  description: z.string().trim().max(5000).optional(),
+  estimatedValue: z.coerce.number().nonnegative().optional(),
+  currency: z.string().trim().length(3).transform((value) => value.toUpperCase()).default('PLN'),
+  probability: z.coerce.number().int().min(0).max(100).default(25),
+  expectedCloseDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+});
+
+export type OpportunityStatus =
+  | 'OPEN'
+  | 'DISCOVERY'
+  | 'SOLUTION_DEFINED'
+  | 'PRICING'
+  | 'PROPOSAL_SENT'
+  | 'NEGOTIATION'
+  | 'COMMIT'
+  | 'WON'
+  | 'LOST'
+  | 'ON_HOLD';
+
+export interface Opportunity {
+  id: string;
+  organizationId: string;
+  leadId: string;
+  ownerUserId?: string;
+  title: string;
+  description?: string;
+  status: OpportunityStatus;
+  estimatedValue?: string;
+  currency: string;
+  probability: number;
+  expectedCloseDate?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface OpportunityRepository {
+  insert(opportunity: Opportunity, tx?: TransactionContext): Promise<void>;
+  listByOrganization(organizationId: string): Promise<Opportunity[]>;
+  findById(organizationId: string, opportunityId: string): Promise<Opportunity | null>;
+}
+
+function rowToOpportunity(row: typeof opportunities.$inferSelect): Opportunity {
+  return {
+    id: row.id,
+    organizationId: row.organizationId,
+    leadId: row.leadId,
+    ...(row.ownerUserId ? { ownerUserId: row.ownerUserId } : {}),
+    title: row.title,
+    ...(row.description ? { description: row.description } : {}),
+    status: row.status,
+    ...(row.estimatedValue ? { estimatedValue: row.estimatedValue } : {}),
+    currency: row.currency,
+    probability: row.probability,
+    ...(row.expectedCloseDate ? { expectedCloseDate: row.expectedCloseDate } : {}),
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
+  };
+}
+
+export class PostgresOpportunityRepository implements OpportunityRepository {
+  constructor(private readonly db: DbExecutor) {}
+
+  async insert(opportunity: Opportunity, tx?: TransactionContext): Promise<void> {
+    const executor = executorFrom(tx, this.db);
+    await executor.insert(opportunities).values({
+      id: opportunity.id,
+      organizationId: opportunity.organizationId,
+      leadId: opportunity.leadId,
+      ownerUserId: opportunity.ownerUserId,
+      title: opportunity.title,
+      description: opportunity.description,
+      status: opportunity.status,
+      estimatedValue: opportunity.estimatedValue,
+      currency: opportunity.currency,
+      probability: opportunity.probability,
+      expectedCloseDate: opportunity.expectedCloseDate,
+      createdAt: opportunity.createdAt,
+      updatedAt: opportunity.updatedAt,
+    });
+  }
+
+  async listByOrganization(organizationId: string): Promise<Opportunity[]> {
+    const rows = await this.db
+      .select()
+      .from(opportunities)
+      .where(eq(opportunities.organizationId, organizationId))
+      .orderBy(desc(opportunities.createdAt));
+    return rows.map(rowToOpportunity);
+  }
+
+  async findById(organizationId: string, opportunityId: string): Promise<Opportunity | null> {
+    const rows = await this.db
+      .select()
+      .from(opportunities)
+      .where(and(eq(opportunities.organizationId, organizationId), eq(opportunities.id, opportunityId)))
+      .limit(1);
+    return rows[0] ? rowToOpportunity(rows[0]) : null;
+  }
+}
+
+export class CreateOpportunityService {
+  constructor(
+    private readonly uow: UnitOfWork,
+    private readonly leads: LeadRepository,
+    private readonly opportunities: OpportunityRepository,
+    private readonly events: DomainEventStore,
+    private readonly audit: AuditStore,
+  ) {}
+
+  async execute(rawInput: unknown, context: RequestContext): Promise<Opportunity> {
+    if (!context.permissions.has('crm.opportunity.write')) {
+      throw new DomainError('AUTH.FORBIDDEN', 'Missing crm.opportunity.write permission.');
+    }
+    const input = createOpportunitySchema.parse(rawInput);
+    const lead = await this.leads.findById(context.organizationId, input.leadId);
+    if (!lead) throw new DomainError('CRM.LEAD_NOT_FOUND', 'Lead was not found in this organization.');
+
+    const now = new Date();
+    const opportunity: Opportunity = {
+      id: randomUUID(),
+      organizationId: context.organizationId,
+      leadId: input.leadId,
+      ...(context.actor.type === 'USER' ? { ownerUserId: context.actor.id } : {}),
+      title: input.title,
+      ...(input.description ? { description: input.description } : {}),
+      status: 'OPEN',
+      ...(input.estimatedValue !== undefined ? { estimatedValue: input.estimatedValue.toFixed(4) } : {}),
+      currency: input.currency,
+      probability: input.probability,
+      ...(input.expectedCloseDate ? { expectedCloseDate: input.expectedCloseDate } : {}),
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    const event = newDomainEvent({
+      organizationId: context.organizationId,
+      eventType: 'OpportunityCreated',
+      aggregateType: 'Opportunity',
+      aggregateId: opportunity.id,
+      payload: {
+        opportunityId: opportunity.id,
+        leadId: opportunity.leadId,
+        status: opportunity.status,
+        currency: opportunity.currency,
+        probability: opportunity.probability,
+      },
+      correlationId: context.correlationId,
+      actor: context.actor,
+    });
+
+    await this.uow.run(async (tx) => {
+      await this.opportunities.insert(opportunity, tx);
+      await this.events.append(event, tx);
+      await this.audit.append(
+        {
+          organizationId: context.organizationId,
+          actor: context.actor,
+          entityType: 'Opportunity',
+          entityId: opportunity.id,
+          action: 'CREATE',
+          afterData: {
+            id: opportunity.id,
+            leadId: opportunity.leadId,
+            status: opportunity.status,
+            estimatedValue: opportunity.estimatedValue ?? null,
+            currency: opportunity.currency,
+            probability: opportunity.probability,
+          },
+          correlationId: context.correlationId,
+        },
+        tx,
+      );
+    });
+    return opportunity;
+  }
+}
+
+export class ReadOpportunityService {
+  constructor(private readonly opportunities: OpportunityRepository) {}
+
+  async list(context: RequestContext): Promise<Opportunity[]> {
+    if (!context.permissions.has('crm.opportunity.read')) {
+      throw new DomainError('AUTH.FORBIDDEN', 'Missing crm.opportunity.read permission.');
+    }
+    return this.opportunities.listByOrganization(context.organizationId);
+  }
+
+  async byId(opportunityId: string, context: RequestContext): Promise<Opportunity> {
+    if (!context.permissions.has('crm.opportunity.read')) {
+      throw new DomainError('AUTH.FORBIDDEN', 'Missing crm.opportunity.read permission.');
+    }
+    const opportunity = await this.opportunities.findById(context.organizationId, opportunityId);
+    if (!opportunity) throw new DomainError('CRM.OPPORTUNITY_NOT_FOUND', 'Opportunity was not found.');
+    return opportunity;
   }
 }
