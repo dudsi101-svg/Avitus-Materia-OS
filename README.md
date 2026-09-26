@@ -34,6 +34,14 @@ Start here:
 8. [`docs/REPOSITORY_STRUCTURE.md`](docs/REPOSITORY_STRUCTURE.md) — target repository structure
 9. [`docs/ROADMAP.md`](docs/ROADMAP.md) — phased roadmap
 10. [`docs/DECISIONS.md`](docs/DECISIONS.md) — architecture/product decision log
+11. [`docs/BOOTSTRAP_CHECKPOINT_0.md`](docs/BOOTSTRAP_CHECKPOINT_0.md) — context-loss protection checkpoint
+
+## Implementation handoff
+
+- [`docs/IMPLEMENTATION_SPRINT_0.md`](docs/IMPLEMENTATION_SPRINT_0.md) — first implementation scope and acceptance criteria
+- [`docs/CLAUDE_SPRINT0_PROMPT.md`](docs/CLAUDE_SPRINT0_PROMPT.md) — ready-to-use Claude implementation prompt
+- [`docs/CLAUDE_WORKFLOW.md`](docs/CLAUDE_WORKFLOW.md) — Claude/GitHub working protocol
+- [`docs/CLAUDE_HANDOFF.md`](docs/CLAUDE_HANDOFF.md) — current-state handoff
 
 ## AI engineering instructions
 
