@@ -5,8 +5,10 @@ import {
   Inject,
   Injectable,
   NestMiddleware,
+  SetMetadata,
   UnauthorizedException,
 } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
 import type { Request, Response } from 'express';
 import type { IdentityRepository } from '@avitus/iam';
 import type { RequestContext, ActorContext } from '@avitus/shared';
@@ -18,6 +20,9 @@ export interface AvitusRequest extends Request {
   avitusContext?: RequestContext;
   correlationId?: string;
 }
+
+const PUBLIC_ROUTE_KEY = 'avitus:public-route';
+export const PublicRoute = () => SetMetadata(PUBLIC_ROUTE_KEY, true);
 
 @Injectable()
 export class CorrelationMiddleware implements NestMiddleware {
@@ -35,9 +40,16 @@ export class DevelopmentAuthGuard implements CanActivate {
   constructor(
     @Inject(TOKENS.config) private readonly config: ServerConfig,
     @Inject(TOKENS.identityRepository) private readonly identity: IdentityRepository,
+    @Inject(Reflector) private readonly reflector: Reflector,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
+    const isPublic = this.reflector.getAllAndOverride<boolean>(PUBLIC_ROUTE_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
+    if (isPublic) return true;
+
     const request = context.switchToHttp().getRequest<AvitusRequest>();
     if (request.path === '/health' || request.path === '/ready') return true;
     if (this.config.AUTH_MODE !== 'development') {

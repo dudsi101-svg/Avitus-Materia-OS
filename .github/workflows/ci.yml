@@ -24,6 +24,9 @@ jobs:
       AUTH_MODE: development
       DATABASE_URL: postgres://avitus:avitus@localhost:5432/avitus
       ADMIN_ORIGIN: http://localhost:3000
+      PUBLIC_INQUIRY_ORGANIZATION_ID: 22222222-2222-4222-8222-222222222222
+      PUBLIC_INQUIRY_API_KEY: ci-public-inquiry-key-not-a-production-secret
+      AVITUS_API_URL: http://localhost:4000
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -31,6 +34,7 @@ jobs:
           node-version: 22
       - run: corepack enable
       - run: pnpm install --frozen-lockfile
+      - run: bash scripts/fly-codespaces-smoke-test.sh
       - run: pnpm db:migrate
       - run: pnpm db:seed:dev
       - run: pnpm lint

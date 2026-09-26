@@ -1,5 +1,6 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { APP_FILTER, APP_GUARD } from '@nestjs/core';
+import { CreatePublicInquiryService, PostgresPublicInquiryRepository } from '@avitus/acquisition';
 import { loadServerConfig } from '@avitus/config';
 import { PostgresProductRepository, ReadCatalogService } from '@avitus/catalog';
 import {
@@ -47,6 +48,7 @@ import { CustomersController } from './customers.controller';
 import { HealthController } from './health.controller';
 import { OpportunitiesController } from './opportunities.controller';
 import { PricingController } from './pricing.controller';
+import { PublicInquiriesController } from './public-inquiries.controller';
 import { QuotesController } from './quotes.controller';
 import { CorrelationMiddleware, DevelopmentAuthGuard } from './request-context';
 import { HttpErrorFilter } from './http-error.filter';
@@ -55,6 +57,7 @@ import { TOKENS } from './tokens';
 const config = loadServerConfig();
 const connection = createDatabase(config.DATABASE_URL);
 const leadRepository = new PostgresLeadRepository(connection.db);
+const publicInquiryRepository = new PostgresPublicInquiryRepository(connection.db);
 const opportunityRepository = new PostgresOpportunityRepository(connection.db);
 const productRepository = new PostgresProductRepository(connection.db);
 const configurationRepository = new PostgresConfigurationRepository(connection.db);
@@ -70,6 +73,7 @@ const eventStore = new PostgresDomainEventStore(connection.db);
 @Module({
   controllers: [
     HealthController,
+    PublicInquiriesController,
     CrmController,
     OpportunitiesController,
     CustomersController,
@@ -84,6 +88,7 @@ const eventStore = new PostgresDomainEventStore(connection.db);
     { provide: TOKENS.pool, useValue: connection.pool },
     { provide: TOKENS.identityRepository, useValue: identityRepository },
     { provide: TOKENS.leadRepository, useValue: leadRepository },
+    { provide: TOKENS.publicInquiryRepository, useValue: publicInquiryRepository },
     { provide: TOKENS.opportunityRepository, useValue: opportunityRepository },
     { provide: TOKENS.productRepository, useValue: productRepository },
     { provide: TOKENS.configurationRepository, useValue: configurationRepository },
@@ -91,6 +96,16 @@ const eventStore = new PostgresDomainEventStore(connection.db);
     { provide: TOKENS.quoteRepository, useValue: quoteRepository },
     { provide: TOKENS.customerAccountRepository, useValue: customerAccountRepository },
     { provide: TOKENS.customerLinkRepository, useValue: customerLinkRepository },
+    {
+      provide: TOKENS.createPublicInquiryService,
+      useValue: new CreatePublicInquiryService(
+        uow,
+        leadRepository,
+        publicInquiryRepository,
+        eventStore,
+        auditStore,
+      ),
+    },
     {
       provide: TOKENS.createLeadService,
       useValue: new CreateLeadService(uow, leadRepository, eventStore, auditStore),

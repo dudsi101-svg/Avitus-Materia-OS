@@ -2,12 +2,14 @@ import type { TransactionContext, UnitOfWork } from '@avitus/shared';
 import { drizzle, type NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
 import * as coreSchema from './schema';
+import * as acquisitionSchema from './acquisition-schema';
 import * as customerSchema from './customer-schema';
 
-export * from './schema';
-export * from './customer-schema';
+const schema = { ...coreSchema, ...acquisitionSchema, ...customerSchema };
 
-const schema = { ...coreSchema, ...customerSchema };
+export * from './schema';
+export * from './acquisition-schema';
+export * from './customer-schema';
 
 export type Database = NodePgDatabase<typeof schema>;
 export type DbExecutor = Pick<Database, 'insert' | 'select' | 'update' | 'delete'>;

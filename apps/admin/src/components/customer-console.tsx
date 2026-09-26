@@ -102,7 +102,7 @@ export function CustomerConsole() {
     <section className="salesSection">
       <div className="sectionHeading">
         <div>
-          <p className="eyebrow">Sprint 3 · Customer identity</p>
+          <p className="eyebrow">Sprint 4 · Customer identity</p>
           <h2>Kto faktycznie kupuje?</h2>
           <p className="muted">Kontakt klienta staje się trwałą daną biznesową, a nie tekstem ukrytym w leadzie lub wiadomości.</p>
         </div>

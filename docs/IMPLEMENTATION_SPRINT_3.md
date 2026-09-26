@@ -1,171 +1,96 @@
-# Avitus Materia OS — Implementation Sprint 3
-
-## Why this sprint moved ahead of Quote governance
-After Sprint 2 the system could create a versioned configuration, calculate an explainable price and create an immutable DRAFT Quote — but there was no durable buyer identity in the implemented Core.
-
-Moving directly to VAT, discounts or `READY/SENT` would therefore create a false commercial state: a quote could be technically "ready" without an authoritative answer to **who is buying and how that party is contacted**.
-
-Sprint 3 closes that gap before Quote governance.
+# Sprint 3 — Public Website v0.1 + Inquiry Intake
 
 ## Goal
-Establish customer/party identity as a first-class organization-scoped source of truth and link it explicitly to the sales chain.
+Deliver the first customer-facing Avitus Materia website without creating a second source of truth outside Avitus Materia OS.
 
-Canonical slice:
+Primary flow:
 
-`Person | Company -> CustomerAccount -> ContactPoint -> Lead / Opportunity`
+`Public Website -> Website Server Route -> Public Inquiry API -> PublicInquirySubmission -> Lead -> Audit/Event/Outbox`
 
-Quote buyer snapshots and READY/SENT policy will consume this source of truth in the following commercial-governance sprint.
+## Scope
 
-## Domain model
-### Person
-A human identity scoped to one organization implementation.
+### Public website
+- `apps/web` Next.js application
+- responsive landing page for Avitus Materia
+- first brand/positioning copy
+- sections: material, process, project directions, configurator roadmap, inquiry
+- SEO/OpenGraph baseline for `Avitus-Materia.com`
+- inquiry form with client-side status handling and honeypot field
 
-Required MVP fields:
-- first name
-- last name
-- display name
+### Public inquiry boundary
+Browser code does **not** receive an API credential.
 
-### Company
-A B2B/legal party.
+The browser posts to `/api/inquiry` inside `apps/web`. That server route validates the request and forwards it to the Avitus API with `PUBLIC_INQUIRY_API_KEY` kept server-side.
 
-MVP fields:
-- legal name
-- display name
-- optional tax identifier
+The NestJS endpoint is explicitly marked with `@PublicRoute()`, bypassing user authentication only for that controller action. It then requires the separate public-inquiry credential using constant-time comparison.
 
-The Sprint does not pretend that tax ID syntax is globally uniform; market-specific validation comes through policy/integration later.
+### Acquisition source of truth
+A website inquiry creates two records in one database transaction:
+1. `Lead` — the CRM entity used by the internal sales process.
+2. `PublicInquirySubmission` — immutable raw intake containing the original name/contact/project description.
 
-### CustomerAccount
-Represents the commercial relationship rather than the raw person/company record.
+The intake record exists so no customer message is lost while the broader Person / ContactPoint / Conversation model is still being implemented.
 
-Types:
-- B2C
-- B2B
-- ARCHITECT
-- PARTNER
-- DEALER
-- OTHER
+PII is retained in the intake table but deliberately omitted from domain-event and audit payload snapshots.
 
-Statuses:
-- PROSPECT
-- ACTIVE
-- VIP
-- DORMANT
-- AT_RISK
-- BLOCKED
-- ARCHIVED
+## Database
+Migration: `0003_public_inquiry.sql`
 
-Exactly one subject is required: Person **or** Company.
+New table:
+- `public_inquiry_submissions`
 
-### ContactPoint
-Types:
-- EMAIL
-- PHONE
-- WHATSAPP
-- OTHER
+Key linkage:
+- `organization_id`
+- `lead_id`
 
-Contact values preserve the operator-entered value and a normalized lookup value.
+## Configuration
+API:
+- `PUBLIC_INQUIRY_ORGANIZATION_ID`
+- `PUBLIC_INQUIRY_API_KEY`
 
-MVP normalization:
-- e-mail -> trimmed lowercase, syntactically validated
-- phone/WhatsApp -> international E.164-style `+...` canonical form
-- `00` international prefix is normalized to `+`
+Web server:
+- `AVITUS_API_URL`
+- `PUBLIC_INQUIRY_API_KEY`
 
-At most one primary contact per account/contact type is allowed by a partial database unique index. If a type has no explicit primary in a create command, the first contact of that type becomes primary.
+`PUBLIC_INQUIRY_ORGANIZATION_ID` and `PUBLIC_INQUIRY_API_KEY` must be configured together on the API.
 
-## Sales links
-Customer identity is not hidden inside Lead title/notes.
+## Security properties
+- public endpoint is opt-in and disabled when configuration is missing
+- website secret remains server-side
+- public endpoint does not reuse development user headers
+- target organization is controlled by server configuration, never by browser input
+- constant-time key comparison
+- schema validation on website server and API domain boundary
+- honeypot rejection
+- PII excluded from event/outbox/audit snapshots
 
-Explicit link records:
-- `Lead -> CustomerAccount`
-- `Opportunity -> CustomerAccount`
+## Production hardening still required
+Before opening production traffic:
+- edge rate limiting / WAF rule for inquiry endpoint
+- real production secrets manager values
+- abuse monitoring and alerting
+- privacy-policy / consent copy review
+- retention/anonymization policy for inquiry PII
+- deployment and domain/DNS configuration
 
-Rules:
-1. links are organization-scoped in application code **and in composite database foreign keys**;
-2. one Lead/Opportunity has at most one current CustomerAccount in Sprint 3;
-3. binding the same account again is idempotent;
-4. rebinding to a different account is blocked rather than silently replacing commercial identity;
-5. future controlled merge/reassignment needs its own permission + reason + audit workflow.
+## Visual limitations of v0.1
+The site intentionally uses material abstractions instead of pretending placeholder images are real Avitus projects. Real photography and video should come from the central realization library once the media pipeline is established.
 
-## Privacy / audit rule
-Contact values are PII. The customer record stores them because they are business data, but audit/event payloads for creation record contact **types**, not raw e-mail/phone values.
+## Acceptance criteria
+- frozen-lockfile install passes
+- all DB migrations pass including `0003`
+- existing Sprints 0–2 tests remain green
+- public inquiry without credential returns 401
+- valid inquiry creates exactly one CRM Lead and one intake record
+- inquiry event/audit payloads do not expose email/phone
+- honeypot request returns validation error
+- `apps/web` typechecks and builds in CI
+- all existing apps/modules still build
 
-This avoids copying PII unnecessarily into append-oriented audit/event streams.
-
-## API
-- `POST /customers/person-accounts`
-- `POST /customers/company-accounts`
-- `GET /customers`
-- `GET /customers/:id`
-- `GET /customers/for-lead/:leadId`
-- `GET /customers/for-opportunity/:opportunityId`
-- `POST /customers/:id/link/lead/:leadId`
-- `POST /customers/:id/link/opportunity/:opportunityId`
-
-## RBAC
-- `customer.account.read`
-- `customer.account.write`
-- `customer.link.write`
-
-## Persistence
-Migration `0003_customer_identity.sql` adds:
-- `persons`
-- `companies`
-- `customer_accounts`
-- `contact_points`
-- `lead_customer_accounts`
-- `opportunity_customer_accounts`
-
-Important database invariants:
-- exactly one Person/Company subject per CustomerAccount;
-- subject belongs to the same organization;
-- contact belongs to an account in the same organization;
-- Lead/Opportunity links use composite organization FKs;
-- one primary contact per account/type;
-- duplicate normalized value of the same type on one account is blocked.
-
-## Events / audit
-Semantic events:
-- `CustomerAccountCreated`
-- `CustomerLinkedToLead`
-- `CustomerLinkedToOpportunity`
-
-Creation and link mutations persist business state + AuditEvent + DomainEvent + outbox intent through the same Unit of Work when the mutation is new.
-
-## Command Center
-Sprint 3 adds an internal operator surface for:
-- creating a B2C CustomerAccount,
-- normalized e-mail/phone capture,
-- binding it to a selected Lead and/or Opportunity,
-- viewing the current customer register.
-
-Company creation exists in API/domain tests; a richer B2B admin form can follow when B2B workflows require it.
-
-## Definition of Done
-CI must prove:
-1. frozen-lockfile install;
-2. migrations `0000` through `0003`;
-3. development seed with customer permissions;
-4. typecheck / boundary lint / all existing tests / production build;
-5. email and phone normalization;
-6. Person CustomerAccount creation with AuditEvent + DomainEvent + outbox;
-7. Company CustomerAccount creation;
-8. Lead and Opportunity customer links;
-9. idempotent same-account link retry;
-10. cross-organization account reads return 404;
-11. a customer from Organization B cannot be linked to Organization A's Opportunity;
-12. raw contact PII is not copied into CustomerAccount creation audit payload.
-
-## Explicit non-goals
-- customer merge/deduplication engine
-- GDPR deletion/anonymization workflow
-- addresses/billing/shipping profiles
-- production auth/customer login
-- customer portal
-- quote buyer snapshot
-- VAT/tax policy
-- discounts/approval matrix
-- quote READY/SENT transition
-- e-mail sending
-
-These follow after the identity source of truth exists.
+## What this unlocks
+After Sprint 3, Avitus Materia has a first real customer-facing surface. The next customer-value steps are:
+1. replace abstract project tiles with actual realization media,
+2. deploy web + API and connect `Avitus-Materia.com`,
+3. add first guided Product Configurator flow,
+4. expose controlled indicative pricing only where pricing policy permits,
+5. later add room-photo analysis and visualization.
