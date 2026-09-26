@@ -10,5 +10,6 @@ for cmd in "${required[@]}"; do
 done
 
 bash -n scripts/fly-codespaces-first-deploy.sh
+bash -n scripts/fly-domain-setup.sh
 
 echo "Codespaces Fly bootstrap preflight passed."
