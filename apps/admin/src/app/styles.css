@@ -9,10 +9,11 @@ button, input, select { font: inherit; }
 .status { border: 1px solid #b4b19f; border-radius: 999px; padding: 8px 12px; background: #fff; }
 .grid { display: grid; grid-template-columns: minmax(280px, .8fr) minmax(360px, 1.2fr); gap: 20px; }
 .panel { background: #fff; border: 1px solid #d8d6cc; border-radius: 18px; padding: 24px; box-shadow: 0 16px 40px rgba(0,0,0,.04); }
-.panel h2 { margin-top: 0; }
+.panel h2, .panel h3 { margin-top: 0; }
 .form { display: grid; gap: 16px; }
 label { display: grid; gap: 7px; font-size: .9rem; font-weight: 650; }
 input, select { width: 100%; border: 1px solid #c9c6b8; border-radius: 10px; padding: 11px 12px; background: #fff; }
+input[type='checkbox'] { width: auto; justify-self: start; }
 button { border: 0; border-radius: 10px; padding: 11px 14px; background: #171717; color: #fff; cursor: pointer; font-weight: 700; }
 button:disabled { opacity: .5; cursor: not-allowed; }
 button.secondary { background: #eceae1; color: #171717; padding: 8px 10px; }
@@ -21,6 +22,13 @@ button.secondary { background: #eceae1; color: #171717; padding: 8px 10px; }
 .lead { display: flex; justify-content: space-between; align-items: center; gap: 16px; border-top: 1px solid #eceae1; padding: 14px 0; }
 .lead p { margin: 4px 0 0; color: #757266; font-size: .85rem; }
 .lead > span { font-size: .75rem; font-weight: 800; background: #eceae1; border-radius: 999px; padding: 6px 8px; }
+.salesSection { margin-top: 28px; padding-top: 28px; border-top: 1px solid #d8d6cc; }
+.sectionHeading { display: flex; justify-content: space-between; align-items: end; gap: 16px; margin-bottom: 18px; }
+.sectionHeading h2 { margin: 4px 0 0; font-size: clamp(1.5rem, 3vw, 2.4rem); letter-spacing: -.035em; }
+.resultBox { display: grid; grid-template-columns: auto auto; gap: 6px 12px; margin-top: 18px; padding: 14px; border: 1px solid #d8d6cc; border-radius: 12px; background: #f7f6f1; }
+.resultBox strong { font-size: .8rem; letter-spacing: .08em; }
+.resultBox span { justify-self: end; color: #757266; }
+.resultBox small { grid-column: 1 / -1; color: #757266; }
 .muted { color: #757266; }
 .error { color: #9a1b1b; background: #fff0f0; border-radius: 10px; padding: 10px; }
-@media (max-width: 760px) { .grid { grid-template-columns: 1fr; } .hero { flex-direction: column; } }
+@media (max-width: 760px) { .grid { grid-template-columns: 1fr; } .hero, .sectionHeading { flex-direction: column; align-items: flex-start; } }
