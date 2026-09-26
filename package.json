@@ -14,6 +14,7 @@
     "test": "turbo run test",
     "db:migrate": "pnpm --filter @avitus/database migrate",
     "db:seed:dev": "pnpm --filter @avitus/database seed:dev",
+    "db:bootstrap:prod": "pnpm --filter @avitus/database bootstrap:prod",
     "ci": "pnpm lint && pnpm typecheck && pnpm test && pnpm build"
   },
   "devDependencies": {
