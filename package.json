@@ -7,8 +7,9 @@
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev --parallel",
-    "lint": "prettier --check . && node scripts/verify-boundaries.mjs",
+    "lint": "node scripts/verify-boundaries.mjs",
     "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
     "db:migrate": "pnpm --filter @avitus/database migrate",
