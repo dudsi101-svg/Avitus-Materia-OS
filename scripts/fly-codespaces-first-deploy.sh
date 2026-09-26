@@ -5,6 +5,8 @@ CLUSTER_NAME="${CLUSTER_NAME:-avitus-materia-db}"
 API_APP="${API_APP:-avitus-materia-api}"
 WEB_APP="${WEB_APP:-avitus-materia-web}"
 FLY_ORG="${FLY_ORG:-personal}"
+MPG_DATABASE="${MPG_DATABASE:-fly-db}"
+MPG_USERNAME="${MPG_USERNAME:-fly-user}"
 ORGANIZATION_ID="${ORGANIZATION_ID:-f0e990a7-e27c-4308-b4b6-d619e68c2270}"
 
 log() { printf '\n==> %s\n' "$*"; }
@@ -98,7 +100,7 @@ SECRETS_JSON="$($FLY secrets list -a "$API_APP" --json 2>/dev/null || printf '[]
 if printf '%s' "$SECRETS_JSON" | json_has_secret "DATABASE_URL"; then
   printf 'DATABASE_URL already exists on %s; skipping database attach.\n' "$API_APP"
 else
-  "$FLY" mpg attach "$CLUSTER_ID" -a "$API_APP" || fail "Managed Postgres attach failed."
+  "$FLY" mpg attach "$CLUSTER_ID" -a "$API_APP" -d "$MPG_DATABASE" -u "$MPG_USERNAME" || fail "Managed Postgres attach failed."
 fi
 
 log "Generating and storing production secrets"
