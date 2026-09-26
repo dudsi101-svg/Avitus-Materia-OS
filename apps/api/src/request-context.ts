@@ -40,7 +40,7 @@ export class DevelopmentAuthGuard implements CanActivate {
   constructor(
     @Inject(TOKENS.config) private readonly config: ServerConfig,
     @Inject(TOKENS.identityRepository) private readonly identity: IdentityRepository,
-    private readonly reflector: Reflector,
+    @Inject(Reflector) private readonly reflector: Reflector,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
