@@ -2,7 +2,8 @@ param(
   [string]$ClusterId,
   [string]$ClusterName = "avitus-materia-db",
   [string]$ApiApp = "avitus-materia-api",
-  [string]$WebApp = "avitus-materia-web"
+  [string]$WebApp = "avitus-materia-web",
+  [string]$OrganizationId = "f0e990a7-e27c-4308-b4b6-d619e68c2270"
 )
 
 $ErrorActionPreference = "Stop"
@@ -27,6 +28,12 @@ function Ensure-FlyApp([string]$AppName) {
   }
 }
 
+function Get-JsonItems($Parsed, [string]$CollectionProperty) {
+  if ($Parsed -is [System.Array]) { return $Parsed }
+  if ($CollectionProperty -and $null -ne $Parsed.$CollectionProperty) { return $Parsed.$CollectionProperty }
+  return @($Parsed)
+}
+
 function Resolve-ClusterId([string]$RequestedId, [string]$RequestedName) {
   if ($RequestedId) { return $RequestedId }
 
@@ -36,20 +43,22 @@ function Resolve-ClusterId([string]$RequestedId, [string]$RequestedName) {
   }
 
   $parsed = $json | ConvertFrom-Json
-  $clusters = if ($parsed -is [System.Array]) {
-    $parsed
-  } elseif ($null -ne $parsed.clusters) {
-    $parsed.clusters
-  } else {
-    @($parsed)
-  }
-
+  $clusters = Get-JsonItems $parsed "clusters"
   $cluster = $clusters | Where-Object { $_.name -eq $RequestedName } | Select-Object -First 1
   if (-not $cluster) {
     throw "Managed Postgres cluster '$RequestedName' was not found. Create it in Fly first or pass -ClusterId explicitly."
   }
 
   return $cluster.id
+}
+
+function Has-FlySecret([string]$AppName, [string]$SecretName) {
+  $json = & fly secrets list -a $AppName --json
+  if ($LASTEXITCODE -ne 0) { return $false }
+
+  $parsed = $json | ConvertFrom-Json
+  $items = Get-JsonItems $parsed "secrets"
+  return $null -ne ($items | Where-Object { $_.name -eq $SecretName } | Select-Object -First 1)
 }
 
 Require-Command "fly"
@@ -66,20 +75,23 @@ Write-Host "Using Managed Postgres cluster: $ClusterName ($resolvedClusterId)"
 Ensure-FlyApp $ApiApp
 Ensure-FlyApp $WebApp
 
-Write-Host "Attaching Managed Postgres to API app..."
-& fly mpg attach $resolvedClusterId -a $ApiApp
-if ($LASTEXITCODE -ne 0) {
-  throw "Managed Postgres attach failed."
+if (Has-FlySecret $ApiApp "DATABASE_URL") {
+  Write-Host "DATABASE_URL already exists on $ApiApp; skipping Managed Postgres attach."
+} else {
+  Write-Host "Attaching Managed Postgres to API app..."
+  & fly mpg attach $resolvedClusterId -a $ApiApp
+  if ($LASTEXITCODE -ne 0) {
+    throw "Managed Postgres attach failed."
+  }
 }
 
-$organizationId = [guid]::NewGuid().ToString()
 $bytes = New-Object byte[] 48
 [System.Security.Cryptography.RandomNumberGenerator]::Fill($bytes)
 $inquirySecret = [Convert]::ToBase64String($bytes).TrimEnd('=').Replace('+','-').Replace('/','_')
 
 Write-Host "Setting API secrets..."
 & fly secrets set `
-  "PUBLIC_INQUIRY_ORGANIZATION_ID=$organizationId" `
+  "PUBLIC_INQUIRY_ORGANIZATION_ID=$OrganizationId" `
   "PUBLIC_INQUIRY_API_KEY=$inquirySecret" `
   -a $ApiApp
 if ($LASTEXITCODE -ne 0) { throw "Setting API secrets failed." }
@@ -119,6 +131,7 @@ try {
 
 Write-Host ""
 Write-Host "First Fly deployment finished."
-Write-Host "Production organization UUID: $organizationId"
+Write-Host "Production organization UUID: $OrganizationId"
 Write-Host "The inquiry secret was generated and stored directly in Fly secrets; it was not written to disk or printed."
+Write-Host "Re-running this script keeps the same production organization UUID and safely rotates the inquiry secret on both apps."
 Write-Host "Next: verify the public form, then configure custom domains and home.pl DNS."
