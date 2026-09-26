@@ -4,6 +4,7 @@ set -Eeuo pipefail
 CLUSTER_NAME="${CLUSTER_NAME:-avitus-materia-db}"
 API_APP="${API_APP:-avitus-materia-api}"
 WEB_APP="${WEB_APP:-avitus-materia-web}"
+FLY_ORG="${FLY_ORG:-personal}"
 ORGANIZATION_ID="${ORGANIZATION_ID:-f0e990a7-e27c-4308-b4b6-d619e68c2270}"
 
 log() { printf '\n==> %s\n' "$*"; }
@@ -68,8 +69,8 @@ ensure_app() {
     return
   fi
 
-  log "Creating Fly app: $app"
-  "$FLY" apps create "$app" || fail "Could not create '$app'. The global Fly app name may already be taken."
+  log "Creating Fly app: $app in organization $FLY_ORG"
+  "$FLY" apps create "$app" --org "$FLY_ORG" || fail "Could not create '$app'. The global Fly app name may already be taken or the organization may be inaccessible."
 }
 
 resolve_fly
@@ -81,9 +82,12 @@ if ! "$FLY" auth whoami; then
   "$FLY" auth whoami >/dev/null || fail "Fly authentication did not complete."
 fi
 
+log "Using Fly organization: $FLY_ORG"
+"$FLY" orgs show "$FLY_ORG" >/dev/null || fail "Fly organization '$FLY_ORG' is not available to the authenticated user."
+
 log "Finding Managed Postgres cluster: $CLUSTER_NAME"
-CLUSTERS_JSON="$($FLY mpg list --json)" || fail "Could not list Fly Managed Postgres clusters."
-CLUSTER_ID="$(printf '%s' "$CLUSTERS_JSON" | json_find_cluster_id)" || fail "Managed Postgres cluster '$CLUSTER_NAME' was not found in the active Fly organization."
+CLUSTERS_JSON="$($FLY mpg list --org "$FLY_ORG" --json)" || fail "Could not list Fly Managed Postgres clusters in organization '$FLY_ORG'."
+CLUSTER_ID="$(printf '%s' "$CLUSTERS_JSON" | json_find_cluster_id)" || fail "Managed Postgres cluster '$CLUSTER_NAME' was not found in Fly organization '$FLY_ORG'."
 printf 'Using cluster %s (%s)\n' "$CLUSTER_NAME" "$CLUSTER_ID"
 
 ensure_app "$API_APP"
