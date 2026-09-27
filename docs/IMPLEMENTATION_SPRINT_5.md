@@ -31,6 +31,13 @@
 5. **Starter catalog.** Two products (table/top, sideboard) mirror the options already approved in website v0.4: width, depth, material and base. They are inserted idempotently with fixed IDs by `db:bootstrap:prod` (runs on every API release) and by the dev seed. Changing the catalog later happens through data, not code.
 6. **PII stays in the intake record.** Events and audit contain ids, product SKU and readiness only.
 
+## Sprint 5b — extensible options (DD-026, migration `0006`)
+- `presentation` metadata on option definitions: group, hint, slider step, choice label/description/swatch
+- starter catalog v2: table gains thickness (3–10 cm), edge (straight/natural), finish (natural oil/smoked oil/unfinished); sideboard gains height (40–120 cm, **range is a proposal for owner review**) and finish. Existing option rows get presentation backfilled only where it is empty, so later catalog edits are not overwritten
+- website renders options generically by group (NUMBER, ENUM with swatches/descriptions, BOOLEAN, TEXT)
+- drawing at true scale: top thickness, natural edge outline, finish tone, table height 75 cm, sideboard height
+- shareable/bookmarkable configuration link (`/kreator?projekt=…&width_cm=…`), re-validated against the catalog (invalid values ignored, numbers snapped to range/step)
+
 ## Out of scope (next slices)
 - indicative price / PriceEstimate (needs approved pricing rules)
 - guest ConfigurationSession with save/resume

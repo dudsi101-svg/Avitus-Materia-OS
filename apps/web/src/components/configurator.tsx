@@ -1,15 +1,21 @@
 'use client';
 
-import { FormEvent, useMemo, useState } from 'react';
+import { FormEvent, useEffect, useMemo, useState } from 'react';
 import {
   choiceLabel,
+  formatValue,
+  fromSearchParams,
+  groupOptions,
   initialValues,
   numberStep,
+  sortedOptions,
+  toSearchParams,
+  type OptionValue,
   type PublicOption,
   type PublicProduct,
+  type Values,
 } from '../lib/configurator';
 
-type Values = Record<string, string | number>;
 type SubmitState = 'idle' | 'sending' | 'success' | 'error';
 
 const WOOD: Record<string, { light: string; dark: string; grain: string }> = {
@@ -18,32 +24,73 @@ const WOOD: Record<string, { light: string; dark: string; grain: string }> = {
   ODZYSK: { light: '#9a7048', dark: '#5e4129', grain: 'rgba(30,18,10,.4)' },
 };
 
+// Finish is shown as a tone overlay on the wood.
+const FINISH_OVERLAY: Record<string, { color: string; opacity: number }> = {
+  OLEJ_DYMIONY: { color: '#120b06', opacity: 0.28 },
+  BEZ_WYKONCZENIA: { color: '#f2ebde', opacity: 0.12 },
+};
+
+const SCALE = 1.7; // px per cm; one scale keeps proportions truthful across products and sizes.
+const TABLE_HEIGHT_CM = 75;
+const CABINET_LEG_CM = 10;
+
+/** Top-view outline; a natural edge follows an irregular line along both long sides. */
+function topOutline(x: number, y: number, w: number, d: number, natural: boolean): string {
+  if (!natural) return `M${x} ${y} H${x + w} V${y + d} H${x} Z`;
+  const waves = Math.max(3, Math.round(w / 90));
+  const seg = w / waves;
+  let path = `M${x} ${y + 4}`;
+  for (let i = 0; i < waves; i += 1) {
+    const x0 = x + i * seg;
+    path += ` C${x0 + seg * 0.3} ${y - 3 + (i % 2) * 5}, ${x0 + seg * 0.7} ${y + 8 - (i % 2) * 6}, ${x0 + seg} ${y + 3 + (i % 2) * 2}`;
+  }
+  path += ` L${x + w} ${y + d - 4}`;
+  for (let i = waves - 1; i >= 0; i -= 1) {
+    const x1 = x + i * seg;
+    path += ` C${x1 + seg * 0.7} ${y + d + 3 - (i % 2) * 5}, ${x1 + seg * 0.3} ${y + d - 7 + (i % 2) * 6}, ${x1} ${y + d - 3 - (i % 2) * 2}`;
+  }
+  return `${path} Z`;
+}
+
 function Schematic({ product, values }: { product: PublicProduct; values: Values }) {
   const width = Number(values.width_cm ?? 200);
   const depth = Number(values.depth_cm ?? 90);
-  const wood = WOOD[String(values.material)] ?? WOOD.DAB!;
-  const base = String(values.base ?? 'DO_USTALENIA');
   const isCabinet = product.slug.startsWith('komoda');
+  const wood = WOOD[String(values.material)] ?? WOOD.DAB!;
+  const overlay = FINISH_OVERLAY[String(values.finish)];
+  const base = String(values.base ?? 'DO_USTALENIA');
+  const natural = values.edge === 'NATURALNA';
 
-  // One shared scale so proportions between products and sizes stay truthful.
-  const scale = 1.7;
-  const w = width * scale;
-  const d = depth * scale;
+  const w = width * SCALE;
+  const d = depth * SCALE;
   const cx = 320;
   const topY = 34;
   const x = cx - w / 2;
   const elevationY = topY + d + 70;
-  const bodyH = isCabinet ? 92 : 12;
-  const legH = isCabinet ? 18 : 78;
+  const legCm = isCabinet ? CABINET_LEG_CM : TABLE_HEIGHT_CM - Number(values.thickness_cm ?? 4);
+  const bodyCm = isCabinet
+    ? Number(values.height_cm ?? 80) - CABINET_LEG_CM
+    : Number(values.thickness_cm ?? 4);
+  const bodyH = Math.max(5, bodyCm * SCALE);
+  const legH = legCm * SCALE;
   const legW = base === 'DREWNO' ? 16 : 8;
   const legInset = Math.min(40, w * 0.12);
   const legFill = base === 'STAL_CZARNA' ? '#2d2b29' : base === 'DREWNO' ? wood.dark : 'none';
   const legStroke = base === 'DO_USTALENIA' ? 'var(--am-gold-light)' : 'rgba(217,183,127,.45)';
-  const viewH = elevationY + bodyH + legH + 40;
-  const label = `${product.name}: ${width} × ${depth} cm, ${choiceLabel(String(values.material))}, podstawa ${choiceLabel(base).toLowerCase()}`;
+  const floorY = elevationY + bodyH + legH;
+  const viewH = floorY + 44;
+  const outline = topOutline(x, topY, w, d, natural && !isCabinet);
+  const label = sortedOptions(product)
+    .map((option) => `${option.name}: ${formatValue(option, values[option.code])}`)
+    .join(', ');
 
   return (
-    <svg className="amSchematic" viewBox={`0 0 640 ${viewH}`} role="img" aria-label={label}>
+    <svg
+      className="amSchematic"
+      viewBox={`0 0 640 ${viewH}`}
+      role="img"
+      aria-label={`${product.name}. ${label}`}
+    >
       <defs>
         <linearGradient id="amWood" x1="0" x2="1" y1="0" y2="1">
           <stop offset="0" stopColor={wood.light} />
@@ -63,18 +110,10 @@ function Schematic({ product, values }: { product: PublicProduct; values: Values
       <text x="20" y="20" className="amSchematicCaption">
         WIDOK Z GÓRY
       </text>
-      <rect x={x} y={topY} width={w} height={d} fill="url(#amWood)" rx={isCabinet ? 1 : 3} />
-      <rect x={x} y={topY} width={w} height={d} fill="url(#amGrain)" rx={isCabinet ? 1 : 3} />
-      <rect
-        x={x}
-        y={topY}
-        width={w}
-        height={d}
-        fill="none"
-        stroke="var(--am-gold-light)"
-        strokeOpacity=".55"
-        rx={isCabinet ? 1 : 3}
-      />
+      <path d={outline} fill="url(#amWood)" />
+      <path d={outline} fill="url(#amGrain)" />
+      {overlay ? <path d={outline} fill={overlay.color} fillOpacity={overlay.opacity} /> : null}
+      <path d={outline} fill="none" stroke="var(--am-gold-light)" strokeOpacity=".55" />
       <line x1={x} x2={x + w} y1={topY + d + 18} y2={topY + d + 18} className="amDimension" />
       <text x={cx} y={topY + d + 36} textAnchor="middle" className="amDimensionText">
         {width} cm
@@ -89,6 +128,16 @@ function Schematic({ product, values }: { product: PublicProduct; values: Values
       </text>
       <rect x={x} y={elevationY} width={w} height={bodyH} fill="url(#amWood)" />
       <rect x={x} y={elevationY} width={w} height={bodyH} fill="url(#amGrain)" />
+      {overlay ? (
+        <rect
+          x={x}
+          y={elevationY}
+          width={w}
+          height={bodyH}
+          fill={overlay.color}
+          fillOpacity={overlay.opacity}
+        />
+      ) : null}
       {isCabinet ? (
         <line
           x1={cx}
@@ -111,13 +160,16 @@ function Schematic({ product, values }: { product: PublicProduct; values: Values
           strokeDasharray={base === 'DO_USTALENIA' ? '4 4' : undefined}
         />
       ))}
-      <line
-        x1="40"
-        x2="600"
-        y1={elevationY + bodyH + legH}
-        y2={elevationY + bodyH + legH}
-        stroke="rgba(217,183,127,.25)"
-      />
+      <line x1="40" x2="600" y1={floorY} y2={floorY} stroke="rgba(217,183,127,.25)" />
+      {isCabinet || values.thickness_cm !== undefined ? (
+        <text
+          x={x + w + 14}
+          y={elevationY + Math.max(bodyH, 14) / 2 + 5}
+          className="amDimensionText"
+        >
+          {isCabinet ? `${values.height_cm ?? '—'} cm wys.` : `${values.thickness_cm} cm`}
+        </text>
+      ) : null}
     </svg>
   );
 }
@@ -128,9 +180,13 @@ function OptionField({
   onChange,
 }: {
   option: PublicOption;
-  value: string | number | undefined;
-  onChange: (value: string | number) => void;
+  value: OptionValue | undefined;
+  onChange: (value: OptionValue) => void;
 }) {
+  const hint = option.presentation?.hint ? (
+    <span className="amFieldHint">{option.presentation.hint}</span>
+  ) : null;
+
   if (option.dataType === 'NUMBER') {
     const min = Number(option.minValue ?? 0);
     const max = Number(option.maxValue ?? 1000);
@@ -139,9 +195,7 @@ function OptionField({
       <label className="amField">
         <span className="amFieldHead">
           {option.name}
-          <strong>
-            {numeric} {option.unit ?? ''}
-          </strong>
+          <strong>{formatValue(option, numeric)}</strong>
         </span>
         <input
           type="range"
@@ -150,41 +204,74 @@ function OptionField({
           step={numberStep(option)}
           value={numeric}
           onChange={(event) => onChange(Number(event.target.value))}
-          aria-valuetext={`${numeric} ${option.unit ?? ''}`}
+          aria-valuetext={formatValue(option, numeric)}
         />
         <span className="amFieldRange">
-          <span>
-            {min} {option.unit}
-          </span>
-          <span>
-            {max} {option.unit}
-          </span>
+          <span>{formatValue(option, min)}</span>
+          <span>{formatValue(option, max)}</span>
         </span>
+        {hint}
       </label>
     );
   }
+
   if (option.dataType === 'ENUM' && option.choices) {
+    const selected =
+      typeof value === 'string' ? option.presentation?.choices?.[value]?.description : undefined;
     return (
       <fieldset className="amField">
         <legend className="amFieldHead">{option.name}</legend>
         <div className="amChips">
-          {option.choices.map((choice) => (
-            <label key={choice} className={value === choice ? 'amChip amChipActive' : 'amChip'}>
-              <input
-                type="radio"
-                name={option.code}
-                value={choice}
-                checked={value === choice}
-                onChange={() => onChange(choice)}
-              />
-              {choiceLabel(choice)}
-            </label>
-          ))}
+          {option.choices.map((choice) => {
+            const swatch = option.presentation?.choices?.[choice]?.swatch;
+            return (
+              <label key={choice} className={value === choice ? 'amChip amChipActive' : 'amChip'}>
+                <input
+                  type="radio"
+                  name={option.code}
+                  value={choice}
+                  checked={value === choice}
+                  onChange={() => onChange(choice)}
+                />
+                {swatch ? (
+                  <span className="amSwatch" style={{ background: swatch }} aria-hidden="true" />
+                ) : null}
+                {choiceLabel(option, choice)}
+              </label>
+            );
+          })}
         </div>
+        {selected ? <span className="amFieldHint">{selected}</span> : hint}
       </fieldset>
     );
   }
-  return null;
+
+  if (option.dataType === 'BOOLEAN') {
+    return (
+      <label className="amField amToggle">
+        <input
+          type="checkbox"
+          checked={value === true}
+          onChange={(event) => onChange(event.target.checked)}
+        />
+        <span>{option.name}</span>
+        {hint}
+      </label>
+    );
+  }
+
+  return (
+    <label className="amField">
+      <span className="amFieldHead">{option.name}</span>
+      <input
+        className="amTextInput"
+        maxLength={200}
+        value={typeof value === 'string' ? value : ''}
+        onChange={(event) => onChange(event.target.value)}
+      />
+      {hint}
+    </label>
+  );
 }
 
 export function Configurator({ products }: { products: PublicProduct[] }) {
@@ -194,20 +281,47 @@ export function Configurator({ products }: { products: PublicProduct[] }) {
     Object.fromEntries(products.map((candidate) => [candidate.id, initialValues(candidate)])),
   );
   const values = valuesByProduct[product.id] ?? {};
+  const [restored, setRestored] = useState(false);
   const [state, setState] = useState<SubmitState>('idle');
   const [feedback, setFeedback] = useState('');
+  const [linkNote, setLinkNote] = useState('');
 
-  const options = useMemo(
-    () => [...product.options].sort((a, b) => a.displayOrder - b.displayOrder),
-    [product],
-  );
+  const groups = useMemo(() => groupOptions(product), [product]);
+  const options = useMemo(() => sortedOptions(product), [product]);
 
-  function setValue(code: string, value: string | number) {
+  // Restore a shared configuration from the URL once, after hydration.
+  useEffect(() => {
+    const shared = fromSearchParams(products, new URLSearchParams(window.location.search));
+    if (shared) {
+      setProductId(shared.product.id);
+      setValuesByProduct((current) => ({ ...current, [shared.product.id]: shared.values }));
+    }
+    setRestored(true);
+  }, [products]);
+
+  // Keep the URL in sync so the configuration can be bookmarked or shared.
+  useEffect(() => {
+    if (!restored) return;
+    const query = toSearchParams(product, values).toString();
+    window.history.replaceState(null, '', `${window.location.pathname}?${query}`);
+  }, [restored, product, values]);
+
+  function setValue(code: string, value: OptionValue) {
     setValuesByProduct((current) => ({
       ...current,
       [product.id]: { ...current[product.id], [code]: value },
     }));
+    setLinkNote('');
     if (state !== 'sending') setState('idle');
+  }
+
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setLinkNote('Link skopiowany — możesz wrócić do tej konfiguracji albo komuś ją wysłać.');
+    } catch {
+      setLinkNote('Skopiuj adres z paska przeglądarki — zawiera całą konfigurację.');
+    }
   }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -246,7 +360,7 @@ export function Configurator({ products }: { products: PublicProduct[] }) {
   return (
     <div className="amConfigurator">
       <div className="amConfigControls">
-        <p className="v04Tag">Kreator v2 · krok 1 z 2</p>
+        <p className="v04Tag">Kreator · krok 1 z 2</p>
         <h2 className="amConfigTitle">Ustalmy punkt startowy.</h2>
         <div className="amProductTabs" role="tablist" aria-label="Typ projektu">
           {products.map((candidate) => (
@@ -264,13 +378,19 @@ export function Configurator({ products }: { products: PublicProduct[] }) {
             </button>
           ))}
         </div>
-        {options.map((option) => (
-          <OptionField
-            key={option.id}
-            option={option}
-            value={values[option.code]}
-            onChange={(value) => setValue(option.code, value)}
-          />
+        {product.description ? <p className="amProductDescription">{product.description}</p> : null}
+        {groups.map(({ group, options: groupOptionsList }) => (
+          <section key={group} className="amGroup" aria-label={group}>
+            <h3 className="amGroupTitle">{group}</h3>
+            {groupOptionsList.map((option) => (
+              <OptionField
+                key={option.id}
+                option={option}
+                value={values[option.code]}
+                onChange={(value) => setValue(option.code, value)}
+              />
+            ))}
+          </section>
         ))}
       </div>
 
@@ -284,14 +404,20 @@ export function Configurator({ products }: { products: PublicProduct[] }) {
           {options.map((option) => (
             <div key={option.id}>
               <dt>{option.name}</dt>
-              <dd>
-                {option.dataType === 'ENUM'
-                  ? choiceLabel(String(values[option.code] ?? '—'))
-                  : `${values[option.code] ?? '—'} ${option.unit ?? ''}`}
-              </dd>
+              <dd>{formatValue(option, values[option.code])}</dd>
             </div>
           ))}
         </dl>
+        <div className="amShare">
+          <button type="button" className="v04Button v04ButtonGhost" onClick={copyLink}>
+            Kopiuj link do konfiguracji
+          </button>
+          {linkNote ? (
+            <span className="amFieldHint" role="status">
+              {linkNote}
+            </span>
+          ) : null}
+        </div>
       </div>
 
       <form className="amRequestForm" onSubmit={submit}>

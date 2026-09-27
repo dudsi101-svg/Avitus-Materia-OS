@@ -196,6 +196,18 @@ fieldset.amField > legend { margin-bottom: 10px; }
 .amRequestForm input { width: 100%; min-height: 48px; padding: 0 13px; background: #121110; border: 1px solid var(--am-line); color: var(--am-cream); font: inherit; }
 .amRequestForm .optional { color: var(--am-muted); font-weight: 500; }
 .amRequestForm button[disabled] { opacity: .6; cursor: progress; }
+.amProductDescription { margin: -12px 0 24px; color: var(--am-muted); font-size: .85rem; line-height: 1.6; }
+.amGroup { padding-top: 20px; border-top: 1px solid var(--am-line); }
+.amGroup + .amGroup { margin-top: 4px; }
+.amGroupTitle { margin: 0 0 18px; color: var(--am-gold-light); font-size: .66rem; letter-spacing: .22em; text-transform: uppercase; font-weight: 800; }
+.amFieldHint { color: var(--am-muted); font-size: .74rem; font-weight: 500; line-height: 1.55; }
+.amSwatch { width: 14px; height: 14px; margin-right: 9px; border-radius: 50%; border: 1px solid rgba(242,235,222,.35); flex: none; }
+.amToggle { grid-template-columns: auto 1fr; align-items: center; }
+.amToggle input { width: 20px; height: 20px; accent-color: var(--am-gold-light); }
+.amToggle .amFieldHint { grid-column: 1 / -1; }
+.amTextInput { width: 100%; min-height: 44px; padding: 0 12px; background: #121110; border: 1px solid var(--am-line); color: var(--am-cream); font: inherit; }
+.amShare { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 18px; margin-top: 18px; }
+.amShare .v04Button { cursor: pointer; font: inherit; font-size: .8rem; }
 @media (max-width: 1050px) {
   .amConfigurator { grid-template-columns: 1fr; grid-template-areas: 'stage' 'controls' 'form'; gap: 20px; }
   .amConfigControls { position: static; }

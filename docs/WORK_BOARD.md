@@ -9,7 +9,7 @@ _Last updated: 2026-09-27 (Sprint 5 claimed)_
 
 | Lane | Owner | Branch | PR | Touches | Status |
 |---|---|---|---|---|---|
-| Sprint 5 / 5b — Public configurator v1 + extensible options (presentation metadata, new options, share link) | Claude (session `ht9hxm`) | `claude/avitus-msteria-project-ht9hxm` | — | `modules/acquisition`, `modules/catalog` (read), migration 0005, `packages/database` (schema, seed-dev, bootstrap-prod starter catalog), new `apps/api` public controller, `apps/api` composition root, `apps/web/src/app/kreator` + new components/route | In review |
+| Sprint 5 / 5b — Public configurator v1 + extensible options (presentation metadata, new options, share link) | Claude (session `ht9hxm`) | `claude/avitus-msteria-project-ht9hxm` | #18 | `modules/acquisition`, `modules/catalog` (read), migrations 0005–0006, `packages/database` (schema, seed-dev, bootstrap-prod starter catalog), new `apps/api` public controller, `apps/api` composition root, `apps/web/src/app/kreator` + new components/route | In review |
 | Production deployment (Fly.io + home.pl DNS) | Human owner | — | — | GitHub secret `FLY_API_TOKEN` | Blocked: Fly returns `unauthorized` for the current token (run 25, 2026-09-27); owner must replace it with an org token covering both apps |
 
 ## Reservations
@@ -24,8 +24,8 @@ Take the next free value, write your lane next to it, commit together with your 
 | 0002 | Sprint 2 pricing/quotes | merged |
 | 0003 | Sprint 3 public inquiry | merged |
 | 0004 | Sprint 4 customer identity | merged |
-| **0005** | Sprint 5 public configuration requests | reserved |
-| **0006** | Sprint 5b option presentation metadata | reserved |
+| **0005** | Sprint 5 public configuration requests | in review (#18) |
+| **0006** | Sprint 5b option presentation metadata | in review (#18) |
 | 0007 | _next free_ | — |
 
 ### Decision IDs (`docs/DECISIONS.md`)
@@ -34,8 +34,8 @@ Take the next free value, write your lane next to it, commit together with your 
 | DD-022 | Production deployment platform (Fly.io) | merged |
 | DD-023 | Coordination protocol and shared-identifier reservations | merged |
 | DD-024 | Customer identity precedes Quote READY/SENT governance | merged |
-| **DD-025** | Public configurator requests: immutable intake snapshot, no auto-Opportunity, no public price | reserved |
-| **DD-026** | Option presentation lives in the catalog, not in UI code | reserved |
+| **DD-025** | Public configurator requests: immutable intake snapshot, no auto-Opportunity, no public price | in review (#18) |
+| **DD-026** | Option presentation lives in the catalog, not in UI code | in review (#18) |
 | DD-027 | _next free_ | — |
 
 ### Sprint numbers

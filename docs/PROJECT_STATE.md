@@ -133,6 +133,7 @@ Established:
 - idempotent starter catalog (table, sideboard) applied by `db:bootstrap:prod` on each API release
 - migration `0005`, DD-025, `docs/IMPLEMENTATION_SPRINT_5.md`
 - fallback to the static v0.4 configurator when the API is unreachable
+- Sprint 5b: option presentation in the catalog (migration `0006`, DD-026), new options (thickness, edge, finish, sideboard height), grouped generic option rendering, true-scale drawing, shareable configuration link
 
 ## Security / isolation decisions enforced
 - Business reads require explicit `organizationId`.
