@@ -117,7 +117,30 @@ Do not introduce Kubernetes, many microservices or other hyperscale infrastructu
 
 GitHub documentation is the durable shared memory for Claude, GPT/Codex and future agents. Material decisions must not live only in chat history.
 
-## DD-022 — Customer identity precedes Quote READY/SENT governance
+## DD-022 — Production deployment platform
+**Status:** Accepted for v0.1
+
+Use **Fly.io** as the primary production runtime for the first Avitus Materia release because an existing Fly workflow/account is already in use and the roadmap requires more than a static website.
+
+Initial production topology:
+- home.pl remains registrar and authoritative DNS,
+- Fly App for public Next.js web,
+- Fly App for NestJS API,
+- Fly Managed Postgres for relational truth,
+- Fly private network for service-to-service traffic where practical.
+
+Keep web and API as separate Fly Apps so they can be deployed/scaled independently. Do not introduce Vercel/Railway unless a measured technical or operational limitation justifies splitting the platform later.
+
+Default nearby European region for Poland is `fra` (Frankfurt), because Fly's former Warsaw `waw` region was deprecated. API and primary database should remain co-located in the same region.
+
+## DD-023 — Coordination protocol and shared-identifier reservations
+**Status:** Accepted
+
+Parallel agent lanes must claim work and reserve shared sequential identifiers (migration numbers, `DD-NNN` IDs, sprint numbers) in `docs/WORK_BOARD.md` before coding, following `docs/COORDINATION.md`. `pnpm lint` runs `scripts/verify-coordination.mjs`, which rejects duplicate migration prefixes and duplicate decision IDs.
+
+Reason: two parallel "Sprint 3" lanes collided on migration `0003`, `DD-022`, the sprint document and composition-root files because no repository channel announced active work.
+
+## DD-024 — Customer identity precedes Quote READY/SENT governance
 **Status:** Accepted
 
 A commercial Quote cannot truthfully become customer-ready unless the system has an authoritative buyer identity and contact context.
@@ -129,15 +152,9 @@ Customer identity must not be represented only as free text in a Lead, Opportuni
 PII should not be copied unnecessarily into append-oriented audit/event payloads.
 
 ## Open decisions for Technical Architecture v0.4
-- Concrete frontend framework/runtime
-- Concrete backend framework/runtime
-- ORM/query strategy
 - Authentication provider
 - Object storage provider
 - queue/job mechanism
-- deployment provider and environments
 - observability stack
-- testing stack
 - search/vector implementation timing
 - AI Gateway provider/adapters
-- exact repo build tooling
