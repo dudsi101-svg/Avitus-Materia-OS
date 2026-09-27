@@ -176,6 +176,12 @@ importers:
       '@avitus/audit':
         specifier: workspace:*
         version: link:../audit
+      '@avitus/catalog':
+        specifier: workspace:*
+        version: link:../catalog
+      '@avitus/configurator':
+        specifier: workspace:*
+        version: link:../configurator
       '@avitus/crm':
         specifier: workspace:*
         version: link:../crm

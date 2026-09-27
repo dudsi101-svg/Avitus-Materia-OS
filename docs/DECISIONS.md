@@ -151,6 +151,11 @@ Customer identity must not be represented only as free text in a Lead, Opportuni
 
 PII should not be copied unnecessarily into append-oriented audit/event payloads.
 
+## DD-025 — Public configurator requests are immutable intake snapshots
+**Status:** Accepted (Sprint 5)
+
+A customer configuration sent from the public website creates a CRM Lead and an immutable `PublicConfigurationRequest` holding the chosen product (id + SKU/name snapshot), option values and the Core readiness assessment. It does **not** create an Opportunity or Configuration automatically; sales qualifies it first. No customer-facing price is shown until pricing rules are approved by the owner. Only active `CONFIGURABLE` products are exposed publicly, without internal price fields. Details: `docs/IMPLEMENTATION_SPRINT_5.md`.
+
 ## Open decisions for Technical Architecture v0.4
 - Authentication provider
 - Object storage provider

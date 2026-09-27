@@ -142,3 +142,36 @@ export class ReadCatalogService {
     return product;
   }
 }
+
+/** Public projection of a configurable product: never exposes price or internal fields (DD-025). */
+export interface PublicProduct {
+  id: string;
+  sku: string;
+  name: string;
+  slug: string;
+  description?: string;
+  options: ProductOptionDefinition[];
+}
+
+export function toPublicProduct(product: Product): PublicProduct {
+  return {
+    id: product.id,
+    sku: product.sku,
+    name: product.name,
+    slug: product.slug,
+    ...(product.description ? { description: product.description } : {}),
+    options: product.options,
+  };
+}
+
+export class ReadPublicCatalogService {
+  constructor(private readonly products: ProductRepository) {}
+
+  async listConfigurable(context: RequestContext): Promise<PublicProduct[]> {
+    if (!context.permissions.has('catalog.public_product.read')) {
+      throw new DomainError('AUTH.FORBIDDEN', 'Missing catalog.public_product.read permission.');
+    }
+    const active = await this.products.listActive(context.organizationId);
+    return active.filter((product) => product.productType === 'CONFIGURABLE').map(toPublicProduct);
+  }
+}

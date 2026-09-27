@@ -10,6 +10,7 @@ const schema = { ...coreSchema, ...acquisitionSchema, ...customerSchema };
 export * from './schema';
 export * from './acquisition-schema';
 export * from './customer-schema';
+export { STARTER_CATALOG, ensureStarterCatalog, starterId } from './starter-catalog';
 
 export type Database = NodePgDatabase<typeof schema>;
 export type DbExecutor = Pick<Database, 'insert' | 'select' | 'update' | 'delete'>;
