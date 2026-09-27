@@ -25,6 +25,9 @@ Final authority for business priorities, irreversible actions, legal/financial p
 9. Keep commits focused and explain intent.
 10. Use branches/PR review for substantial implementation once active development begins.
 
+## Coordination
+Claims, reservations (migration numbers, decision IDs, sprint numbers) and known collisions: `docs/WORK_BOARD.md`. Rules and communication channels: `docs/COORDINATION.md`.
+
 ## Handoff format
 When one agent hands work to another, include:
 - Goal
