@@ -8,8 +8,8 @@ async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
   app.enableCors({ origin: config.ADMIN_ORIGIN, credentials: false });
   app.enableShutdownHooks();
-  await app.listen(config.PORT, '0.0.0.0');
-  console.log(`Avitus Materia API listening on :${config.PORT}`);
+  await app.listen(config.PORT, config.API_LISTEN_HOST);
+  console.log(`Avitus Materia API listening on ${config.API_LISTEN_HOST}:${config.PORT}`);
 }
 
 bootstrap().catch((error) => {

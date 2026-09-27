@@ -170,5 +170,8 @@ Core remains organization-aware to preserve the path to Partner Organizations, c
 7. Then extend accepted Quote -> Order / Project.
 8. Add room-photo analysis and generated visualization only after the basic configuration/quote/customer journey is stable.
 
+## Multi-agent coordination
+Active work, reserved migration/decision/sprint numbers and known collisions live in `docs/WORK_BOARD.md`; the protocol is `docs/COORDINATION.md` (DD-023). Customer identity (formerly PR #5, which collided with `main` on migration `0003`, `DD-022` and sprint numbering) is rebuilt as Sprint 4 on current `main` with migration `0004`, DD-024 and `IMPLEMENTATION_SPRINT_4.md`; it replaces PR #5 once green.
+
 ## Project memory rule
 GitHub documentation is the durable project memory. Material architectural/product decisions must be reflected in repository docs rather than relying on chat history alone.

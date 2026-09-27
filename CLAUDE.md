@@ -48,6 +48,7 @@ Read, in order:
 3. `docs/DECISIONS.md`
 4. `docs/AI_PRODUCT_CONFIGURATOR.md` when working on customer/configurator features
 5. `AGENTS.md`
+6. `docs/WORK_BOARD.md` and `docs/COORDINATION.md` (claim work and reserve IDs before coding)
 
 If implementation conflicts with these files, stop and flag the conflict instead of silently changing architecture.
 
