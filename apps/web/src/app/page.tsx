@@ -1,3 +1,4 @@
+// Production release marker: v0.4 realization-first public site.
 import Link from 'next/link';
 import { InquiryForm } from '../components/inquiry-form';
 import { RealizationGrid } from '../components/realization-grid';
