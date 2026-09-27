@@ -164,6 +164,7 @@ export const productOptionDefinitions = pgTable('product_option_definitions', {
   maxValue: numeric('max_value', { precision: 19, scale: 4 }),
   unit: varchar('unit', { length: 40 }),
   choices: jsonb('choices'),
+  presentation: jsonb('presentation'),
   displayOrder: integer('display_order').notNull().default(0),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 }, (table) => [uniqueIndex('product_option_product_code_uidx').on(table.productId, table.code)]);

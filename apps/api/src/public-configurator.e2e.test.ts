@@ -22,6 +22,16 @@ const publicKey = process.env.PUBLIC_INQUIRY_API_KEY;
 const organizationId = process.env.PUBLIC_INQUIRY_ORGANIZATION_ID;
 const suite = connectionString && publicKey && organizationId ? describe : describe.skip;
 
+const tableValues = {
+  width_cm: 220,
+  depth_cm: 100,
+  thickness_cm: 5,
+  material: 'STARY_DAB',
+  edge: 'NATURALNA',
+  finish: 'OLEJ_NATURALNY',
+  base: 'STAL_CZARNA',
+};
+
 suite('Public configurator API', () => {
   let app: INestApplication;
   const external = connectionString ? createDatabase(connectionString) : null;
@@ -59,12 +69,19 @@ suite('Public configurator API', () => {
     const products = response.body.products as Array<Record<string, unknown>>;
     const table = products.find((product) => product.id === tableId);
     expect(table).toMatchObject({ sku: 'AM-STOL-01', name: 'Stół / blat' });
-    expect((table!.options as Array<{ code: string }>).map((option) => option.code)).toEqual([
+    const options = table!.options as Array<{ code: string; presentation?: { group?: string; choices?: Record<string, { label: string }> } }>;
+    expect(options.map((option) => option.code)).toEqual([
       'width_cm',
       'depth_cm',
+      'thickness_cm',
       'material',
+      'edge',
+      'finish',
       'base',
     ]);
+    const materialOption = options.find((option) => option.code === 'material');
+    expect(materialOption?.presentation?.group).toBe('Drewno i wykończenie');
+    expect(materialOption?.presentation?.choices?.STARY_DAB?.label).toBe('Stary dąb');
     const body = JSON.stringify(response.body);
     expect(body).not.toContain('basePrice');
     expect(body).not.toContain('organizationId');
@@ -77,7 +94,7 @@ suite('Public configurator API', () => {
       .set('x-avitus-public-inquiry-key', publicKey)
       .send({
         productId: tableId,
-        values: { width_cm: 220, depth_cm: 100, material: 'STARY_DAB', base: 'STAL_CZARNA' },
+        values: tableValues,
         name: 'Anna Kreator',
         email: 'ANNA.KREATOR@EXAMPLE.COM',
         phone: '+48 600 700 800',
@@ -101,7 +118,7 @@ suite('Public configurator API', () => {
       productSku: 'AM-STOL-01',
       email: 'anna.kreator@example.com',
       configurationStatus: 'READY_FOR_PRICING',
-      optionValues: { width_cm: 220, depth_cm: 100, material: 'STARY_DAB', base: 'STAL_CZARNA' },
+      optionValues: tableValues,
     });
 
     const leadRows = await external.db.select().from(leads).where(eq(leads.id, saved.leadId));
