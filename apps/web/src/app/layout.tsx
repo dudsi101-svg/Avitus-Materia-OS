@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import './styles.css';
+import './v04.css';
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://avitus-materia.com'),

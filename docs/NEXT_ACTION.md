@@ -6,10 +6,9 @@ _Updated 2026-09-26. Sprints 0–3 are merged. Live coordination state: `docs/WO
 Follow the session start checklist in `docs/COORDINATION.md` before coding.
 
 ## Queue (in order)
-1. **Resolve PR #5 collisions (customer identity)** — needs owner approval to push to
-   `sprint-3/customer-identity`. Merge `main` in, rename migration to `0004_customer_identity.sql`,
-   renumber decision to DD-024, move sprint doc to `IMPLEMENTATION_SPRINT_4.md`, regenerate lockfile,
-   run full CI. Details: `docs/WORK_BOARD.md` C-001..C-004.
+1. **Merge Sprint 4 customer identity** — rebuilt on current `main` (migration 0004, DD-024,
+   `IMPLEMENTATION_SPRINT_4.md`), branch `claude/avitus-msteria-project-ht9hxm`. Close PR #5 after
+   the replacement PR is green.
 2. **Production v0.1** — owner steps in `docs/FLY_DEPLOYMENT_USER_CHECKLIST.md` (Fly secrets,
    Managed Postgres, home.pl DNS, smoke test inquiry -> Lead).
 3. **Human decision:** Sprint 5 = guided public Product Configurator *or* Quote governance

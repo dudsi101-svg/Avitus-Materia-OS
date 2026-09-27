@@ -72,6 +72,9 @@ importers:
       '@avitus/crm':
         specifier: workspace:*
         version: link:../../modules/crm
+      '@avitus/customers':
+        specifier: workspace:*
+        version: link:../../modules/customers
       '@avitus/database':
         specifier: workspace:*
         version: link:../../packages/database
@@ -273,6 +276,37 @@ importers:
       '@avitus/audit':
         specifier: workspace:*
         version: link:../audit
+      '@avitus/database':
+        specifier: workspace:*
+        version: link:../../packages/database
+      '@avitus/events':
+        specifier: workspace:*
+        version: link:../events
+      '@avitus/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
+      drizzle-orm:
+        specifier: ^0.44.5
+        version: 0.44.7(@types/pg@8.23.1)(pg@8.23.0)
+      zod:
+        specifier: ^4.1.0
+        version: 4.6.5
+    devDependencies:
+      typescript:
+        specifier: ^5.8.3
+        version: 5.9.3
+      vitest:
+        specifier: ^3.2.4
+        version: 3.2.7(@types/node@22.20.4)(tsx@4.23.15)
+
+  modules/customers:
+    dependencies:
+      '@avitus/audit':
+        specifier: workspace:*
+        version: link:../audit
+      '@avitus/crm':
+        specifier: workspace:*
+        version: link:../crm
       '@avitus/database':
         specifier: workspace:*
         version: link:../../packages/database

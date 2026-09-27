@@ -5,6 +5,7 @@ const serverSchema = z.object({
   AUTH_MODE: z.enum(['development', 'external']).default('development'),
   DATABASE_URL: z.string().min(1),
   PORT: z.coerce.number().int().positive().default(4000),
+  API_LISTEN_HOST: z.enum(['0.0.0.0', '::']).default('0.0.0.0'),
   ADMIN_ORIGIN: z.string().url().default('http://localhost:3000'),
   PUBLIC_INQUIRY_ORGANIZATION_ID: z.string().uuid().optional(),
   PUBLIC_INQUIRY_API_KEY: z.string().min(24).optional(),
