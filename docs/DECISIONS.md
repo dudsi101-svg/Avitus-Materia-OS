@@ -140,6 +140,17 @@ Parallel agent lanes must claim work and reserve shared sequential identifiers (
 
 Reason: two parallel "Sprint 3" lanes collided on migration `0003`, `DD-022`, the sprint document and composition-root files because no repository channel announced active work.
 
+## DD-024 — Customer identity precedes Quote READY/SENT governance
+**Status:** Accepted
+
+A commercial Quote cannot truthfully become customer-ready unless the system has an authoritative buyer identity and contact context.
+
+Therefore `Person`, `Company`, `CustomerAccount` and `ContactPoint`, plus explicit sales links, are implemented before VAT/discount/approval and `READY/SENT` Quote transitions.
+
+Customer identity must not be represented only as free text in a Lead, Opportunity, message or Quote PDF. Quote governance will consume CustomerAccount as source of truth and will later snapshot buyer data into the legally/business-significant QuoteVersion representation.
+
+PII should not be copied unnecessarily into append-oriented audit/event payloads.
+
 ## Open decisions for Technical Architecture v0.4
 - Authentication provider
 - Object storage provider

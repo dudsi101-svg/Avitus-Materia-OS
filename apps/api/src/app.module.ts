@@ -17,6 +17,15 @@ import {
   ReadLeadService,
   ReadOpportunityService,
 } from '@avitus/crm';
+import {
+  CreateCompanyCustomerService,
+  CreatePersonCustomerService,
+  CustomerContextService,
+  LinkCustomerService,
+  PostgresCustomerAccountRepository,
+  PostgresCustomerLinkRepository,
+  ReadCustomerService,
+} from '@avitus/customers';
 import { createDatabase, PostgresUnitOfWork } from '@avitus/database';
 import { PostgresAuditStore } from '@avitus/audit';
 import { PostgresDomainEventStore } from '@avitus/events';
@@ -35,6 +44,7 @@ import {
 import { CatalogController } from './catalog.controller';
 import { ConfigurationsController } from './configurations.controller';
 import { CrmController } from './crm.controller';
+import { CustomersController } from './customers.controller';
 import { HealthController } from './health.controller';
 import { OpportunitiesController } from './opportunities.controller';
 import { PricingController } from './pricing.controller';
@@ -53,6 +63,8 @@ const productRepository = new PostgresProductRepository(connection.db);
 const configurationRepository = new PostgresConfigurationRepository(connection.db);
 const priceCalculationRepository = new PostgresPriceCalculationRepository(connection.db);
 const quoteRepository = new PostgresQuoteRepository(connection.db);
+const customerAccountRepository = new PostgresCustomerAccountRepository(connection.db);
+const customerLinkRepository = new PostgresCustomerLinkRepository(connection.db);
 const identityRepository = new PostgresIdentityRepository(connection.db);
 const uow = new PostgresUnitOfWork(connection.db);
 const auditStore = new PostgresAuditStore(connection.db);
@@ -64,6 +76,7 @@ const eventStore = new PostgresDomainEventStore(connection.db);
     PublicInquiriesController,
     CrmController,
     OpportunitiesController,
+    CustomersController,
     CatalogController,
     ConfigurationsController,
     PricingController,
@@ -81,6 +94,8 @@ const eventStore = new PostgresDomainEventStore(connection.db);
     { provide: TOKENS.configurationRepository, useValue: configurationRepository },
     { provide: TOKENS.priceCalculationRepository, useValue: priceCalculationRepository },
     { provide: TOKENS.quoteRepository, useValue: quoteRepository },
+    { provide: TOKENS.customerAccountRepository, useValue: customerAccountRepository },
+    { provide: TOKENS.customerLinkRepository, useValue: customerLinkRepository },
     {
       provide: TOKENS.createPublicInquiryService,
       useValue: new CreatePublicInquiryService(
@@ -109,6 +124,31 @@ const eventStore = new PostgresDomainEventStore(connection.db);
     {
       provide: TOKENS.readOpportunityService,
       useValue: new ReadOpportunityService(opportunityRepository),
+    },
+    {
+      provide: TOKENS.createPersonCustomerService,
+      useValue: new CreatePersonCustomerService(uow, customerAccountRepository, eventStore, auditStore),
+    },
+    {
+      provide: TOKENS.createCompanyCustomerService,
+      useValue: new CreateCompanyCustomerService(uow, customerAccountRepository, eventStore, auditStore),
+    },
+    { provide: TOKENS.readCustomerService, useValue: new ReadCustomerService(customerAccountRepository) },
+    {
+      provide: TOKENS.linkCustomerService,
+      useValue: new LinkCustomerService(
+        uow,
+        customerAccountRepository,
+        customerLinkRepository,
+        leadRepository,
+        opportunityRepository,
+        eventStore,
+        auditStore,
+      ),
+    },
+    {
+      provide: TOKENS.customerContextService,
+      useValue: new CustomerContextService(customerAccountRepository, customerLinkRepository),
     },
     { provide: TOKENS.readCatalogService, useValue: new ReadCatalogService(productRepository) },
     {
