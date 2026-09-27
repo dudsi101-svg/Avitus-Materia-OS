@@ -117,6 +117,23 @@ During Sprint 3 CI, regression tests caught two integration defects before merge
 2. Turborepo needed explicit public-inquiry environment propagation so the new E2E suite could not silently skip.
 Both were fixed before PR #4 was merged.
 
+## Sprint 4 — merged customer identity
+`Person | Company -> CustomerAccount -> ContactPoint -> Lead / Opportunity` (PR #17, migration `0004`, DD-024).
+
+## Sprint 5 — public configurator v1 (in review)
+Validated flow:
+
+`Catalog (CONFIGURABLE) -> /kreator (server-loaded, 5 min revalidation) -> Next route -> Public Configurator API -> PublicConfigurationRequest + Lead -> Audit + DomainEvents + Outbox`
+
+Established:
+- catalog-driven customer configurator with a live proportional drawing (top + front view), mobile layout, honest "no automatic price" copy
+- `GET /public/configurator/products` (active CONFIGURABLE only, no price fields) and `POST /public/configurator/requests` behind the existing server-to-server credential
+- validation shared with the Core (`assessConfiguration`)
+- immutable `public_configuration_requests` snapshot + Lead in one transaction; PII excluded from events/audit
+- idempotent starter catalog (table, sideboard) applied by `db:bootstrap:prod` on each API release
+- migration `0005`, DD-025, `docs/IMPLEMENTATION_SPRINT_5.md`
+- fallback to the static v0.4 configurator when the API is unreachable
+
 ## Security / isolation decisions enforced
 - Business reads require explicit `organizationId`.
 - Lead, Opportunity, Product, Configuration, PriceCalculation and Quote lookup boundaries are organization-scoped.

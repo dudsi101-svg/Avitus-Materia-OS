@@ -21,10 +21,32 @@ const MATERIALS = ['STARY_DAB', 'DAB', 'ODZYSK'];
 const BASES = ['STAL_CZARNA', 'DREWNO', 'DO_USTALENIA'];
 
 const sharedOptions: StarterOption[] = [
-  { code: 'width_cm', name: 'Szerokość', dataType: 'NUMBER', minValue: '80', maxValue: '320', unit: 'cm', displayOrder: 10 },
-  { code: 'depth_cm', name: 'Głębokość', dataType: 'NUMBER', minValue: '40', maxValue: '140', unit: 'cm', displayOrder: 20 },
+  {
+    code: 'width_cm',
+    name: 'Szerokość',
+    dataType: 'NUMBER',
+    minValue: '80',
+    maxValue: '320',
+    unit: 'cm',
+    displayOrder: 10,
+  },
+  {
+    code: 'depth_cm',
+    name: 'Głębokość',
+    dataType: 'NUMBER',
+    minValue: '40',
+    maxValue: '140',
+    unit: 'cm',
+    displayOrder: 20,
+  },
   { code: 'material', name: 'Materiał', dataType: 'ENUM', choices: MATERIALS, displayOrder: 30 },
-  { code: 'base', name: 'Konstrukcja / podstawa', dataType: 'ENUM', choices: BASES, displayOrder: 40 },
+  {
+    code: 'base',
+    name: 'Konstrukcja / podstawa',
+    dataType: 'ENUM',
+    choices: BASES,
+    displayOrder: 40,
+  },
 ];
 
 export const STARTER_CATALOG = [
@@ -50,7 +72,9 @@ export const STARTER_CATALOG = [
 
 /** Deterministic per-organization UUID so reruns are idempotent and IDs never clash across organizations. */
 export function starterId(organizationId: string, key: string): string {
-  const hex = createHash('sha256').update(`avitus-starter-catalog:${organizationId}:${key}`).digest('hex');
+  const hex = createHash('sha256')
+    .update(`avitus-starter-catalog:${organizationId}:${key}`)
+    .digest('hex');
   const variant = ((parseInt(hex[16]!, 16) & 0x3) | 0x8).toString(16);
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-5${hex.slice(13, 16)}-${variant}${hex.slice(17, 20)}-${hex.slice(20, 32)}`;
 }
@@ -62,7 +86,12 @@ export async function ensureStarterCatalog(db: Database, organizationId: string)
       const productId = starterId(organizationId, `product:${product.key}`);
       await tx
         .insert(productFamilies)
-        .values({ id: familyId, organizationId, name: product.family.name, slug: product.family.slug })
+        .values({
+          id: familyId,
+          organizationId,
+          name: product.family.name,
+          slug: product.family.slug,
+        })
         .onConflictDoNothing();
       await tx
         .insert(products)
@@ -98,13 +127,17 @@ export async function ensureStarterCatalog(db: Database, organizationId: string)
         )
         .onConflictDoNothing();
     }
-    const ids = STARTER_CATALOG.map((product) => starterId(organizationId, `product:${product.key}`));
+    const ids = STARTER_CATALOG.map((product) =>
+      starterId(organizationId, `product:${product.key}`),
+    );
     const present = await tx
       .select({ id: products.id })
       .from(products)
       .where(and(eq(products.organizationId, organizationId), inArray(products.id, ids)));
     if (present.length !== ids.length) {
-      throw new Error('Starter catalog conflicts with existing products (SKU/slug already used differently).');
+      throw new Error(
+        'Starter catalog conflicts with existing products (SKU/slug already used differently).',
+      );
     }
   });
 }

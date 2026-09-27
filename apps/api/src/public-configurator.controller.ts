@@ -25,8 +25,14 @@ export class PublicConfiguratorController {
   @PublicRoute()
   @Post('requests')
   async create(@Body() body: unknown, @Req() request: AvitusRequest) {
-    const context = publicWebContext(this.config, request, ['acquisition.public_configuration_request.create']);
+    const context = publicWebContext(this.config, request, [
+      'acquisition.public_configuration_request.create',
+    ]);
     const result = await this.createRequest.execute(body, context);
-    return { ok: true, reference: result.requestId, configurationStatus: result.configurationStatus };
+    return {
+      ok: true,
+      reference: result.requestId,
+      configurationStatus: result.configurationStatus,
+    };
   }
 }

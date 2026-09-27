@@ -9,7 +9,8 @@ import { TOKENS } from './tokens';
 export class PublicInquiriesController {
   constructor(
     @Inject(TOKENS.config) private readonly config: ServerConfig,
-    @Inject(TOKENS.createPublicInquiryService) private readonly createInquiry: CreatePublicInquiryService,
+    @Inject(TOKENS.createPublicInquiryService)
+    private readonly createInquiry: CreatePublicInquiryService,
   ) {}
 
   @PublicRoute()

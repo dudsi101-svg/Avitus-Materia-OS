@@ -18,13 +18,36 @@ const product: Product = {
   basePrice: '999.0000',
   defaultCurrency: 'PLN',
   options: [
-    { id: 'o1', code: 'width_cm', name: 'Szerokość', dataType: 'NUMBER', required: true, minValue: '80', maxValue: '320', unit: 'cm', displayOrder: 10 },
-    { id: 'o2', code: 'material', name: 'Materiał', dataType: 'ENUM', required: true, choices: ['DAB', 'STARY_DAB'], displayOrder: 20 },
+    {
+      id: 'o1',
+      code: 'width_cm',
+      name: 'Szerokość',
+      dataType: 'NUMBER',
+      required: true,
+      minValue: '80',
+      maxValue: '320',
+      unit: 'cm',
+      displayOrder: 10,
+    },
+    {
+      id: 'o2',
+      code: 'material',
+      name: 'Materiał',
+      dataType: 'ENUM',
+      required: true,
+      choices: ['DAB', 'STARY_DAB'],
+      displayOrder: 20,
+    },
   ],
 };
 
 function setup(overrides: Partial<Product> = {}) {
-  const inserted: { leads: unknown[]; requests: PublicConfigurationRequest[]; events: Array<{ payload: unknown }>; audit: Array<{ afterData?: unknown }> } = {
+  const inserted: {
+    leads: unknown[];
+    requests: PublicConfigurationRequest[];
+    events: Array<{ payload: unknown }>;
+    audit: Array<{ afterData?: unknown }>;
+  } = {
     leads: [],
     requests: [],
     events: [],
@@ -37,7 +60,11 @@ function setup(overrides: Partial<Product> = {}) {
   const service = new CreatePublicConfigurationRequestService(
     { run: async (work) => work({ executor: {} }) },
     products,
-    { insert: async (lead) => void inserted.leads.push(lead), listByOrganization: async () => [], findById: async () => null },
+    {
+      insert: async (lead) => void inserted.leads.push(lead),
+      listByOrganization: async () => [],
+      findById: async () => null,
+    },
     { insert: async (request) => void inserted.requests.push(request) },
     { append: async (event) => void inserted.events.push(event) },
     { append: async (entry) => void inserted.audit.push(entry) },
@@ -67,7 +94,11 @@ describe('CreatePublicConfigurationRequestService', () => {
 
     expect(result.configurationStatus).toBe('READY_FOR_PRICING');
     expect(inserted.leads).toHaveLength(1);
-    expect(inserted.requests[0]).toMatchObject({ productSku: 'AM-STOL-01', email: 'jan@example.test', optionValues: valid.values });
+    expect(inserted.requests[0]).toMatchObject({
+      productSku: 'AM-STOL-01',
+      email: 'jan@example.test',
+      optionValues: valid.values,
+    });
     const logged = JSON.stringify([inserted.events, inserted.audit]);
     expect(logged).not.toContain('jan@example.test');
     expect(logged).not.toContain('Jan Testowy');
@@ -83,26 +114,39 @@ describe('CreatePublicConfigurationRequestService', () => {
 
   it('rejects out-of-range values and unknown choices', async () => {
     const { service } = setup();
-    await expect(service.execute({ ...valid, values: { width_cm: 900, material: 'DAB' } }, context)).rejects.toMatchObject({
+    await expect(
+      service.execute({ ...valid, values: { width_cm: 900, material: 'DAB' } }, context),
+    ).rejects.toMatchObject({
       code: expect.stringMatching(/^CONFIGURATION\./),
     });
-    await expect(service.execute({ ...valid, values: { width_cm: 200, material: 'PLASTIK' } }, context)).rejects.toMatchObject({
+    await expect(
+      service.execute({ ...valid, values: { width_cm: 200, material: 'PLASTIK' } }, context),
+    ).rejects.toMatchObject({
       code: 'CONFIGURATION.INVALID_ENUM_VALUE',
     });
   });
 
   it('rejects unknown and non-configurable products', async () => {
-    await expect(setup().service.execute({ ...valid, productId: '55555555-5555-4555-8555-555555555555' }, context)).rejects.toMatchObject({
+    await expect(
+      setup().service.execute(
+        { ...valid, productId: '55555555-5555-4555-8555-555555555555' },
+        context,
+      ),
+    ).rejects.toMatchObject({
       code: 'CATALOG.PRODUCT_NOT_FOUND',
     });
-    await expect(setup({ productType: 'STANDARD' }).service.execute(valid, context)).rejects.toMatchObject({
+    await expect(
+      setup({ productType: 'STANDARD' }).service.execute(valid, context),
+    ).rejects.toMatchObject({
       code: 'CATALOG.PRODUCT_NOT_FOUND',
     });
   });
 
   it('requires the public configuration permission and rejects the honeypot', async () => {
     const { service } = setup();
-    await expect(service.execute(valid, { ...context, permissions: new Set() })).rejects.toMatchObject({ code: 'AUTH.FORBIDDEN' });
+    await expect(
+      service.execute(valid, { ...context, permissions: new Set() }),
+    ).rejects.toMatchObject({ code: 'AUTH.FORBIDDEN' });
     await expect(service.execute({ ...valid, companyWebsite: 'spam' }, context)).rejects.toThrow();
   });
 });

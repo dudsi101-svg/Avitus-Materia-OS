@@ -12,7 +12,9 @@ function secretsMatch(provided: string | undefined, expected: string): boolean {
   if (!provided) return false;
   const providedBytes = Buffer.from(provided);
   const expectedBytes = Buffer.from(expected);
-  return providedBytes.length === expectedBytes.length && timingSafeEqual(providedBytes, expectedBytes);
+  return (
+    providedBytes.length === expectedBytes.length && timingSafeEqual(providedBytes, expectedBytes)
+  );
 }
 
 export function publicWebContext(

@@ -9,7 +9,7 @@ _Last updated: 2026-09-27 (Sprint 5 claimed)_
 
 | Lane | Owner | Branch | PR | Touches | Status |
 |---|---|---|---|---|---|
-| Sprint 5 — Public configurator v1 (catalog-driven kreator → configuration request → Lead) | Claude (session `ht9hxm`) | `claude/avitus-msteria-project-ht9hxm` | — | `modules/acquisition`, `modules/catalog` (read), migration 0005, `packages/database` (schema, seed-dev, bootstrap-prod starter catalog), new `apps/api` public controller, `apps/api` composition root, `apps/web/src/app/kreator` + new components/route | In progress |
+| Sprint 5 — Public configurator v1 (catalog-driven kreator → configuration request → Lead) | Claude (session `ht9hxm`) | `claude/avitus-msteria-project-ht9hxm` | — | `modules/acquisition`, `modules/catalog` (read), migration 0005, `packages/database` (schema, seed-dev, bootstrap-prod starter catalog), new `apps/api` public controller, `apps/api` composition root, `apps/web/src/app/kreator` + new components/route | In review |
 | Production deployment (Fly.io + home.pl DNS) | Human owner | — | — | GitHub secret `FLY_API_TOKEN` | Blocked: Fly returns `unauthorized` for the current token (run 25, 2026-09-27); owner must replace it with an org token covering both apps |
 
 ## Reservations

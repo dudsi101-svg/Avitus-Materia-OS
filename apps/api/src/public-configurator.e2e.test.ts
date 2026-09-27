@@ -35,7 +35,8 @@ suite('Public configurator API', () => {
 
   afterAll(async () => {
     if (!external) return;
-    if (createdLeadIds.length) await external.db.delete(leads).where(inArray(leads.id, createdLeadIds));
+    if (createdLeadIds.length)
+      await external.db.delete(leads).where(inArray(leads.id, createdLeadIds));
     if (app) {
       const apiPool = app.get<Pool>(TOKENS.pool);
       await app.close();
@@ -104,12 +105,21 @@ suite('Public configurator API', () => {
     });
 
     const leadRows = await external.db.select().from(leads).where(eq(leads.id, saved.leadId));
-    expect(leadRows[0]).toMatchObject({ organizationId, source: 'PUBLIC_CONFIGURATOR', status: 'NEW' });
+    expect(leadRows[0]).toMatchObject({
+      organizationId,
+      source: 'PUBLIC_CONFIGURATOR',
+      status: 'NEW',
+    });
 
     const events = await external.db
       .select()
       .from(domainEvents)
-      .where(and(eq(domainEvents.organizationId, organizationId), eq(domainEvents.aggregateId, requestId)));
+      .where(
+        and(
+          eq(domainEvents.organizationId, organizationId),
+          eq(domainEvents.aggregateId, requestId),
+        ),
+      );
     expect(events.map((event) => event.eventType)).toEqual(['PublicConfigurationRequestReceived']);
     const outbox = await external.db
       .select()
@@ -120,7 +130,9 @@ suite('Public configurator API', () => {
     const audit = await external.db
       .select()
       .from(auditEvents)
-      .where(and(eq(auditEvents.organizationId, organizationId), eq(auditEvents.entityId, requestId)));
+      .where(
+        and(eq(auditEvents.organizationId, organizationId), eq(auditEvents.entityId, requestId)),
+      );
     expect(audit).toHaveLength(1);
     const logged = JSON.stringify([events, audit]);
     expect(logged).not.toContain('anna.kreator@example.com');
