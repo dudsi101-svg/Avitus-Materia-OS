@@ -15,7 +15,7 @@ const product: Product = {
   slug: 'stol-blat',
   productType: 'CONFIGURABLE',
   active: true,
-  basePrice: '999.0000',
+  basePrice: '4321.5678',
   defaultCurrency: 'PLN',
   options: [
     {
@@ -102,7 +102,8 @@ describe('CreatePublicConfigurationRequestService', () => {
     const logged = JSON.stringify([inserted.events, inserted.audit]);
     expect(logged).not.toContain('jan@example.test');
     expect(logged).not.toContain('Jan Testowy');
-    expect(logged).not.toContain('999');
+    expect(logged).not.toContain('4321.5678');
+    expect(logged).not.toContain('basePrice');
   });
 
   it('marks missing required options as INCOMPLETE', async () => {
