@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { ensureStarterCatalog } from './starter-catalog';
 import {
   createDatabase,
   organizationUsers,
@@ -87,6 +88,8 @@ async function seed(): Promise<void> {
       { id: optionIds[4], organizationId: DEV_ORG_ID, productId: DEV_PRODUCT_ID, code: 'edge_type', name: 'Edge type', dataType: 'ENUM', required: true, choices: ['STRAIGHT', 'NATURAL'], displayOrder: 50 },
       { id: optionIds[5], organizationId: DEV_ORG_ID, productId: DEV_PRODUCT_ID, code: 'finish', name: 'Finish', dataType: 'ENUM', required: true, choices: ['OIL_NATURAL', 'OIL_SMOKED', 'RAW'], displayOrder: 60 },
     ]).onConflictDoNothing();
+
+    await ensureStarterCatalog(db, DEV_ORG_ID);
 
     console.log('Development organization/user/permissions/catalog seeded.');
   } finally {

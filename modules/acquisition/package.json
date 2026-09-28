@@ -11,6 +11,8 @@
   },
   "dependencies": {
     "@avitus/audit": "workspace:*",
+    "@avitus/catalog": "workspace:*",
+    "@avitus/configurator": "workspace:*",
     "@avitus/crm": "workspace:*",
     "@avitus/database": "workspace:*",
     "@avitus/events": "workspace:*",

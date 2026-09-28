@@ -1,8 +1,13 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { APP_FILTER, APP_GUARD } from '@nestjs/core';
-import { CreatePublicInquiryService, PostgresPublicInquiryRepository } from '@avitus/acquisition';
+import {
+  CreatePublicConfigurationRequestService,
+  CreatePublicInquiryService,
+  PostgresPublicConfigurationRequestRepository,
+  PostgresPublicInquiryRepository,
+} from '@avitus/acquisition';
 import { loadServerConfig } from '@avitus/config';
-import { PostgresProductRepository, ReadCatalogService } from '@avitus/catalog';
+import { PostgresProductRepository, ReadCatalogService, ReadPublicCatalogService } from '@avitus/catalog';
 import {
   CreateConfigurationService,
   PostgresConfigurationRepository,
@@ -48,6 +53,7 @@ import { CustomersController } from './customers.controller';
 import { HealthController } from './health.controller';
 import { OpportunitiesController } from './opportunities.controller';
 import { PricingController } from './pricing.controller';
+import { PublicConfiguratorController } from './public-configurator.controller';
 import { PublicInquiriesController } from './public-inquiries.controller';
 import { QuotesController } from './quotes.controller';
 import { CorrelationMiddleware, DevelopmentAuthGuard } from './request-context';
@@ -58,6 +64,7 @@ const config = loadServerConfig();
 const connection = createDatabase(config.DATABASE_URL);
 const leadRepository = new PostgresLeadRepository(connection.db);
 const publicInquiryRepository = new PostgresPublicInquiryRepository(connection.db);
+const publicConfigurationRequestRepository = new PostgresPublicConfigurationRequestRepository(connection.db);
 const opportunityRepository = new PostgresOpportunityRepository(connection.db);
 const productRepository = new PostgresProductRepository(connection.db);
 const configurationRepository = new PostgresConfigurationRepository(connection.db);
@@ -74,6 +81,7 @@ const eventStore = new PostgresDomainEventStore(connection.db);
   controllers: [
     HealthController,
     PublicInquiriesController,
+    PublicConfiguratorController,
     CrmController,
     OpportunitiesController,
     CustomersController,
@@ -106,6 +114,19 @@ const eventStore = new PostgresDomainEventStore(connection.db);
         auditStore,
       ),
     },
+    { provide: TOKENS.publicConfigurationRequestRepository, useValue: publicConfigurationRequestRepository },
+    {
+      provide: TOKENS.createPublicConfigurationRequestService,
+      useValue: new CreatePublicConfigurationRequestService(
+        uow,
+        productRepository,
+        leadRepository,
+        publicConfigurationRequestRepository,
+        eventStore,
+        auditStore,
+      ),
+    },
+    { provide: TOKENS.readPublicCatalogService, useValue: new ReadPublicCatalogService(productRepository) },
     {
       provide: TOKENS.createLeadService,
       useValue: new CreateLeadService(uow, leadRepository, eventStore, auditStore),

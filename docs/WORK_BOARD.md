@@ -3,14 +3,14 @@
 Protocol: `docs/COORDINATION.md`. Update this file whenever you start, hand off or finish a lane.
 PRs on GitHub are the tie-breaker if this board is stale.
 
-_Last updated: 2026-09-27_
+_Last updated: 2026-09-27 (Sprint 5 claimed)_
 
 ## Active lanes
 
 | Lane | Owner | Branch | PR | Touches | Status |
 |---|---|---|---|---|---|
-| Sprint 4 — Customer identity (Person/Company/CustomerAccount/ContactPoint + sales links), rebuilt from PR #5 on current `main` | Claude (session `ht9hxm`) | `claude/avitus-msteria-project-ht9hxm` | new (supersedes #5) | new `modules/customers`; migration 0004; `apps/api` composition root; `apps/admin`; `packages/database`; DECISIONS DD-024 | In review — C-001..C-004 resolved. `feat/customer-identity-v2` was created empty at `main`; not used, to avoid writing to another lane's branch |
-| Production deployment v0.1 (Fly.io + home.pl DNS) | Human owner | — (scripts merged to `main`) | — | infra only, `scripts/fly-*`, secrets outside repo | Waiting on owner actions (`docs/FLY_DEPLOYMENT_USER_CHECKLIST.md`) |
+| Sprint 5 / 5b — Public configurator v1 + extensible options (presentation metadata, new options, share link) | Claude (session `ht9hxm`) | `claude/avitus-msteria-project-ht9hxm` | #18 | `modules/acquisition`, `modules/catalog` (read), migrations 0005–0006, `packages/database` (schema, seed-dev, bootstrap-prod starter catalog), new `apps/api` public controller, `apps/api` composition root, `apps/web/src/app/kreator` + new components/route | In review |
+| Production deployment (Fly.io + home.pl DNS) | Human owner | — | — | GitHub secret `FLY_API_TOKEN` | Blocked: Fly returns `unauthorized` for the current token (run 25, 2026-09-27); owner must replace it with an org token covering both apps |
 
 ## Reservations
 
@@ -23,16 +23,20 @@ Take the next free value, write your lane next to it, commit together with your 
 | 0001 | Sprint 1 sales foundation | merged |
 | 0002 | Sprint 2 pricing/quotes | merged |
 | 0003 | Sprint 3 public inquiry | merged |
-| **0004** | Sprint 4 customer identity (`0004_customer_identity.sql`) | in review |
-| 0005 | _next free_ | — |
+| 0004 | Sprint 4 customer identity | merged |
+| **0005** | Sprint 5 public configuration requests | in review (#18) |
+| **0006** | Sprint 5b option presentation metadata | in review (#18) |
+| 0007 | _next free_ | — |
 
 ### Decision IDs (`docs/DECISIONS.md`)
 | ID | Subject | State |
 |---|---|---|
 | DD-022 | Production deployment platform (Fly.io) | merged |
 | DD-023 | Coordination protocol and shared-identifier reservations | merged |
-| **DD-024** | Customer identity precedes Quote READY/SENT governance | in review |
-| DD-025 | _next free_ | — |
+| DD-024 | Customer identity precedes Quote READY/SENT governance | merged |
+| **DD-025** | Public configurator requests: immutable intake snapshot, no auto-Opportunity, no public price | in review (#18) |
+| **DD-026** | Option presentation lives in the catalog, not in UI code | in review (#18) |
+| DD-027 | _next free_ | — |
 
 ### Sprint numbers
 | Sprint | Subject | State |
@@ -41,8 +45,9 @@ Take the next free value, write your lane next to it, commit together with your 
 | 1 | Opportunity, Catalog, Configuration | merged |
 | 2 | Pricing + immutable draft quotes | merged |
 | 3 | Public website v0.1 + inquiry intake | merged |
-| **4** | Customer identity (`IMPLEMENTATION_SPRINT_4.md`) | in review |
-| 5 | _next free_ (candidate: guided public configurator or Quote governance — human decision) | — |
+| 4 | Customer identity | merged |
+| **5** | Public configurator v1 (owner chose option A on 2026-09-27) | reserved |
+| 6 | _next free_ (candidate: Quote governance) | — |
 
 ## Known collisions
 
@@ -76,4 +81,5 @@ Resolved by rebuilding the lane on current `main` in a new PR (owner approved au
 |---|---|---|
 | Sprint 0–3, design refinement, Fly deployment helpers | #1–#4, #6–#10 | changes landed on `main` (PRs closed after direct integration) |
 | Coordination protocol + collision guard (DD-023) | #11 | landed on `main` |
+| Sprint 4 customer identity (replaced #5) | #17 | merged |
 | API dual-stack bind (INC-001), production deploy gate, website v0.4, path-aware Fly deploy | #12–#16 | landed on `main` |

@@ -1,9 +1,36 @@
 import { productOptionDefinitions, products, type DbExecutor } from '@avitus/database';
 import { DomainError, type RequestContext } from '@avitus/shared';
 import { and, asc, eq, inArray } from 'drizzle-orm';
+import { z } from 'zod';
 
 export type ProductType = 'STANDARD' | 'CONFIGURABLE' | 'CUSTOM' | 'SERVICE';
 export type ProductOptionDataType = 'NUMBER' | 'TEXT' | 'ENUM' | 'BOOLEAN';
+
+/** Customer-facing presentation of an option (DD-026). Never affects validation. */
+export interface OptionPresentation {
+  group?: string;
+  hint?: string;
+  step?: number;
+  choices?: Record<string, { label: string; description?: string; swatch?: string }>;
+}
+
+const presentationSchema = z
+  .object({
+    group: z.string().max(80).optional(),
+    hint: z.string().max(300).optional(),
+    step: z.number().positive().optional(),
+    choices: z
+      .record(
+        z.string().max(120),
+        z.object({
+          label: z.string().max(120),
+          description: z.string().max(300).optional(),
+          swatch: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
+        }),
+      )
+      .optional(),
+  })
+  .strip();
 
 export interface ProductOptionDefinition {
   id: string;
@@ -15,6 +42,7 @@ export interface ProductOptionDefinition {
   maxValue?: string;
   unit?: string;
   choices?: string[];
+  presentation?: OptionPresentation;
   displayOrder: number;
 }
 
@@ -43,6 +71,9 @@ function optionFromRow(row: typeof productOptionDefinitions.$inferSelect): Produ
   const choices = Array.isArray(rawChoices)
     ? rawChoices.filter((value): value is string => typeof value === 'string')
     : undefined;
+  // Malformed presentation data is ignored rather than breaking the catalog.
+  const parsedPresentation = row.presentation ? presentationSchema.safeParse(row.presentation) : null;
+  const presentation = parsedPresentation?.success ? (parsedPresentation.data as OptionPresentation) : undefined;
   return {
     id: row.id,
     code: row.code,
@@ -53,6 +84,7 @@ function optionFromRow(row: typeof productOptionDefinitions.$inferSelect): Produ
     ...(row.maxValue !== null ? { maxValue: row.maxValue } : {}),
     ...(row.unit ? { unit: row.unit } : {}),
     ...(choices ? { choices } : {}),
+    ...(presentation ? { presentation } : {}),
     displayOrder: row.displayOrder,
   };
 }
@@ -140,5 +172,38 @@ export class ReadCatalogService {
     const product = await this.products.findActiveById(context.organizationId, productId);
     if (!product) throw new DomainError('CATALOG.PRODUCT_NOT_FOUND', 'Product was not found.');
     return product;
+  }
+}
+
+/** Public projection of a configurable product: never exposes price or internal fields (DD-025). */
+export interface PublicProduct {
+  id: string;
+  sku: string;
+  name: string;
+  slug: string;
+  description?: string;
+  options: ProductOptionDefinition[];
+}
+
+export function toPublicProduct(product: Product): PublicProduct {
+  return {
+    id: product.id,
+    sku: product.sku,
+    name: product.name,
+    slug: product.slug,
+    ...(product.description ? { description: product.description } : {}),
+    options: product.options,
+  };
+}
+
+export class ReadPublicCatalogService {
+  constructor(private readonly products: ProductRepository) {}
+
+  async listConfigurable(context: RequestContext): Promise<PublicProduct[]> {
+    if (!context.permissions.has('catalog.public_product.read')) {
+      throw new DomainError('AUTH.FORBIDDEN', 'Missing catalog.public_product.read permission.');
+    }
+    const active = await this.products.listActive(context.organizationId);
+    return active.filter((product) => product.productType === 'CONFIGURABLE').map(toPublicProduct);
   }
 }

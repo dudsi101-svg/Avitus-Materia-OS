@@ -1,5 +1,6 @@
 import { eq } from 'drizzle-orm';
 import { createDatabase, organizations } from './index';
+import { ensureStarterCatalog } from './starter-catalog';
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -39,6 +40,9 @@ async function bootstrap(): Promise<void> {
     }
 
     console.log(`Production organization ready: ${organization.name} (${organization.id}).`);
+
+    await ensureStarterCatalog(db, organization.id);
+    console.log('Starter public catalog ready.');
   } finally {
     await pool.end();
   }

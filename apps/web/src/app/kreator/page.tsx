@@ -1,29 +1,35 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { Configurator } from '../../components/configurator';
 import { ConfiguratorLite } from '../../components/configurator-lite';
 import { SiteFooter } from '../../components/site-footer';
 import { SiteHeader } from '../../components/site-header';
+import { loadConfiguratorProducts } from '../../lib/public-api';
+
+// Catalog is read from Avitus Materia OS and refreshed every 5 minutes.
+export const revalidate = 300;
 
 export const metadata: Metadata = {
   title: 'Kreator',
   description: 'Kreator Avitus Materia — wybierz kierunek, materiał i wymiary projektu.',
 };
 
-export default function ConfiguratorPage() {
+export default async function ConfiguratorPage() {
+  const products = await loadConfiguratorProducts();
   return (
     <main>
       <SiteHeader />
       <section className="v04PageHero">
         <div className="v04Shell">
-          <p className="v04Tag">Avitus Materia OS · Kreator v1</p>
+          <p className="v04Tag">Avitus Materia OS · Kreator</p>
           <h1>Od „podoba mi się” do konkretnego briefu.</h1>
           <p>
-            Pierwsza wersja kreatora porządkuje najważniejsze decyzje bez udawania automatycznej wyceny. Następny etap połączy konfigurację z historią realizacji, kosztami i regułami wyceny.
+            Wybierz typ mebla, wymiary, drewno i podstawę. Konfiguracja trafia prosto do naszego systemu, a my wracamy z propozycją i wyceną opartą na prawdziwych kosztach.
           </p>
         </div>
       </section>
       <section className="v04Section v04SectionDark">
-        <div className="v04Shell"><ConfiguratorLite /></div>
+        <div className="v04Shell">{products && products.length > 0 ? <Configurator products={products} /> : <ConfiguratorLite />}</div>
       </section>
       <section className="v04Section v04SectionWarm">
         <div className="v04Shell v04Intro">

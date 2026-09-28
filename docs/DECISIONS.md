@@ -151,6 +151,16 @@ Customer identity must not be represented only as free text in a Lead, Opportuni
 
 PII should not be copied unnecessarily into append-oriented audit/event payloads.
 
+## DD-025 — Public configurator requests are immutable intake snapshots
+**Status:** Accepted (Sprint 5)
+
+A customer configuration sent from the public website creates a CRM Lead and an immutable `PublicConfigurationRequest` holding the chosen product (id + SKU/name snapshot), option values and the Core readiness assessment. It does **not** create an Opportunity or Configuration automatically; sales qualifies it first. No customer-facing price is shown until pricing rules are approved by the owner. Only active `CONFIGURABLE` products are exposed publicly, without internal price fields. Details: `docs/IMPLEMENTATION_SPRINT_5.md`.
+
+## DD-026 — Option presentation lives in the catalog, not in UI code
+**Status:** Accepted (Sprint 5b)
+
+Customer-facing presentation of catalog options (group, hint, slider step, choice labels, descriptions, swatches) is stored as `product_option_definitions.presentation` (migration `0006`). It never changes what the Core accepts: validation stays in the typed columns (`data_type`, ranges, `choices`). The catalog parses presentation defensively (malformed data is ignored) and the public projection exposes it. New options and products are added as data; the website renders NUMBER, ENUM, BOOLEAN and TEXT options generically. Configurations are shareable through URL parameters that are re-validated against the catalog on load.
+
 ## Open decisions for Technical Architecture v0.4
 - Authentication provider
 - Object storage provider
