@@ -9,8 +9,7 @@ _Last updated: 2026-09-28_
 
 | Lane | Owner | Branch | PR | Touches | Status |
 |---|---|---|---|---|---|
-| Catalog: sideboard depth/height defaults | Claude (session `ht9hxm`) | `claude/avitus-msteria-project-ht9hxm` | — | `packages/database/src/starter-catalog.ts`, docs | In review |
-| Production deployment (Fly.io + home.pl DNS) | Human owner | — | — | GitHub secret `FLY_API_TOKEN` | Blocked: Fly returns `unauthorized` for the current token (run 25, 2026-09-27); owner must replace it with an org token covering both apps |
+| Deploy: per-app deployed tags so failed/skipped deploys keep pending changes | Claude (session `ht9hxm`) | `claude/avitus-msteria-project-ht9hxm` | — | `.github/workflows/deploy-fly.yml`, deploy docs | In review |
 
 ## Reservations
 
@@ -83,4 +82,6 @@ Resolved by rebuilding the lane on current `main` in a new PR (owner approved au
 | Coordination protocol + collision guard (DD-023) | #11 | landed on `main` |
 | Sprint 4 customer identity (replaced #5) | #17 | merged |
 | Sprint 5 / 5b public configurator + extensible options | #18 | merged 2026-09-28 |
+| Sideboard catalog defaults | #19 | merged 2026-09-28 |
+| Production deploy unblocked (new Fly org token) | — | web + API deployed 2026-09-28 |
 | API dual-stack bind (INC-001), production deploy gate, website v0.4, path-aware Fly deploy | #12–#16 | landed on `main` |
