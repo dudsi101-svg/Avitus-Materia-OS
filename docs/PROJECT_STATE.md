@@ -1,14 +1,14 @@
 # Avitus Materia OS — Project State
 
-**Checkpoint:** 4 — Sprint 3 public website v0.1 + inquiry intake validated and merged
-**Date:** 2026-09-26
-**Status:** Sprints 0–3 are merged to `main`. PR #4 passed frozen-lockfile CI, migrations, seed, lint, typecheck, all tests and production build; post-merge CI on `main` is green.
+**Checkpoint:** 7 — Sprint 6 merged and deployed; Sprint 7 identity handoff planned  
+**Date:** 2026-09-28  
+**Status:** Sprints 0–6 are merged to `main`. Current main is `f1bbe07` (#22). The post-fix Fly production workflow run 41 completed successfully; API deploy and `/ready` verification passed.
 
 ## Identity
 - Brand: **Avitus Materia**
-- Main domain: **Avitus-Materia.com**
+- Main domain: **avitus-materia.com**
 - Repository: `dudsi101-svg/Avitus-Materia-OS`
-- Previous brand: Drakkar — legacy/history only; do not embed it into new Core names.
+- Previous brand: Drakkar — legacy/history only; never use it for new Core names.
 
 ## Product definition
 Avitus Materia OS is the central AI-native Operating & Sales System for custom manufacturing.
@@ -34,165 +34,122 @@ Core principle:
 - append-oriented audit history
 - semantic domain events + transactional PostgreSQL outbox
 - development-only user auth adapter forbidden in production
-- explicit public-route boundary with a separate server-to-server inquiry credential
+- explicit public-route boundary with separate server-to-server web credential
 - no arbitrary AI database access
 - important commercial facts are version/snapshot oriented rather than destructively overwritten
-- monetary values are decimal source-of-truth values; business price arithmetic does not use binary floating point
+- monetary values use exact decimal/fixed-scale arithmetic, not binary floating point
 
-## Sprint 0 — merged foundation
-Validated flow:
+## Delivered vertical slices
 
-`Authenticated user context -> Organization -> Lead -> AuditEvent + DomainEvent + Outbox -> Admin`
+### Sprint 0 — foundation
+`Authenticated context -> Organization -> Lead -> AuditEvent + DomainEvent + Outbox -> Admin`
 
-Established monorepo/tooling, API/admin composition roots, PostgreSQL, migrations/seed, organization-aware IAM/RBAC, Lead vertical slice, audit/domain events/outbox, structured errors, health/readiness, tenant-isolation tests, frozen lockfile and CI.
+Established workspace/tooling, PostgreSQL, migrations, IAM/RBAC foundation, Lead, audit/events/outbox, health/readiness, tenant isolation and CI.
 
-## Sprint 1 — merged sales/configuration foundation
-Validated flow:
-
+### Sprint 1 — sales/configuration foundation
 `Lead -> Opportunity -> Product -> Configuration -> ConfigurationVersion`
 
-Established:
-- organization-scoped Opportunity
-- ProductFamily / Product / ProductOptionDefinition catalog
-- versioned Configuration with immutable ConfigurationVersion snapshots
-- option type/range/choice/required validation
-- `INCOMPLETE` vs `READY_FOR_PRICING`
-- organization isolation through CRM/catalog/configurator
-- audit/domain-event/outbox persistence
-- admin Command Center path through Opportunity and Configuration
+Established organization-scoped Opportunity, catalog, typed option validation and immutable ConfigurationVersion history.
 
-## Sprint 2 — merged pricing / internal draft quote source of truth
-Validated flow:
-
+### Sprint 2 — pricing and draft quotes
 `ConfigurationVersion -> PriceCalculation -> CostComponents -> Quote -> QuoteVersion -> QuoteItem`
 
-Established:
-- exact fixed-scale 4-decimal monetary arithmetic backed by BigInt
-- immutable PriceCalculation pinned to an exact ConfigurationVersion
-- pricing input/output snapshots and cost-component history
-- immutable QuoteVersion / QuoteItem snapshots
-- stale-pricing guard after configuration revision
-- optimistic Quote revision conflict guard
-- organization-scoped Pricing/Quote API and RBAC
-- admin flow through Configuration -> Pricing -> Draft Quote
-- migration `0002_pricing_quotes.sql`
-- unit + full API E2E coverage
+Established exact 4-decimal arithmetic, immutable pricing snapshots, immutable QuoteVersion history, stale-pricing guards and organization-scoped pricing/quote APIs. Quotes remain internal drafts.
 
-## Sprint 3 — merged first customer-facing website
-Validated flow:
+### Sprint 3 — public website + inquiry intake
+`Public Website -> server proxy -> Public Inquiry API -> PublicInquirySubmission + Lead -> Audit + Events + Outbox`
 
-`Public Website -> Next server route -> Public Inquiry API -> PublicInquirySubmission + CRM Lead -> Audit + Domain Events + Outbox`
+Established secure public inquiry intake with server-side credential, honeypot validation and PII minimization in audit/event payloads.
 
-Established:
-- `apps/web` — first responsive Avitus Materia customer website
-- public brand/positioning landing page for `Avitus-Materia.com`
-- material/process/project/configurator/contact sections
-- SEO/OpenGraph baseline
-- customer inquiry form
-- server-side website proxy; backend credential is never sent to browser JavaScript
-- explicit `@PublicRoute()` mechanism in the API authentication guard
-- separate constant-time checked server-to-server public-inquiry credential
-- target organization controlled only by server configuration
-- `modules/acquisition`
-- immutable `public_inquiry_submissions` intake record preserving original contact/project information
-- one transaction creates the CRM Lead, intake record, audit records, semantic events and outbox entries
-- PII deliberately excluded from event/outbox/audit snapshots
-- migration `0003_public_inquiry.sql`
-- honeypot validation and API E2E coverage
-- existing Sprint 0–2 tests protected against regression
+### Website v0.4 / production brand surface
+Public web has moved beyond the original one-page v0.1 baseline. Current site includes multi-page Avitus Materia structure, real realization photography, heritage/material-led brand direction and configurator entry points. Pages include home, O nas, Realizacje, Kolekcje, Kreator, Dla firm and Kontakt.
 
-## Sprint 3 validation
-CI has demonstrated successful execution of:
-- `pnpm install --frozen-lockfile`
-- migrations `0000` through `0003`
-- development seed
-- module-boundary lint
-- TypeScript typecheck across all workspace packages including `apps/web`
-- Sprint 0–2 tests
-- public inquiry security/E2E tests
-- production builds for the whole monorepo
+### Sprint 4 — customer identity
+`Person | Company -> CustomerAccount -> ContactPoint -> Lead / Opportunity`
 
-During Sprint 3 CI, regression tests caught two integration defects before merge:
-1. the global Nest auth guard needed explicit `Reflector` injection after adding `@PublicRoute()`,
-2. Turborepo needed explicit public-inquiry environment propagation so the new E2E suite could not silently skip.
-Both were fixed before PR #4 was merged.
+PR #17, migration `0004`, DD-024. Established explicit customer subjects, normalized contacts and governed Lead/Opportunity links.
 
-## Sprint 4 — merged customer identity
-`Person | Company -> CustomerAccount -> ContactPoint -> Lead / Opportunity` (PR #17, migration `0004`, DD-024).
+### Sprint 5 / 5b — public configurator
+`Catalog -> /kreator -> Public Configurator API -> PublicConfigurationRequest + Lead`
 
-## Sprint 5 — public configurator v1 (merged, PR #18)
-Validated flow:
+PR #18, migrations `0005`–`0006`, DD-025/DD-026. The configurator is catalog-driven, renders options generically, uses the Core validation model, supports shareable configuration links, and stores an immutable request snapshot without exposing price or organization internals.
 
-`Catalog (CONFIGURABLE) -> /kreator (server-loaded, 5 min revalidation) -> Next route -> Public Configurator API -> PublicConfigurationRequest + Lead -> Audit + DomainEvents + Outbox`
+Current starter catalog includes table and sideboard configurations. Sideboard defaults were corrected in PR #19 to depth 30–60 cm and height 50–110 cm.
 
-Established:
-- catalog-driven customer configurator with a live proportional drawing (top + front view), mobile layout, honest "no automatic price" copy
-- `GET /public/configurator/products` (active CONFIGURABLE only, no price fields) and `POST /public/configurator/requests` behind the existing server-to-server credential
-- validation shared with the Core (`assessConfiguration`)
-- immutable `public_configuration_requests` snapshot + Lead in one transaction; PII excluded from events/audit
-- idempotent starter catalog (table, sideboard) applied by `db:bootstrap:prod` on each API release
-- migration `0005`, DD-025, `docs/IMPLEMENTATION_SPRINT_5.md`
-- fallback to the static v0.4 configurator when the API is unreachable
-- Sprint 5b: option presentation in the catalog (migration `0006`, DD-026), new options (thickness, edge, finish, sideboard height), grouped generic option rendering, true-scale drawing, shareable configuration link
+### Sprint 6 — request conversion into sales work
+`PublicConfigurationRequest -> explicit convert -> Opportunity + Configuration v1 -> Pricing -> Draft Quote`
 
-## Sprint 6 — configurator request → Opportunity + Configuration (in review)
-`PublicConfigurationRequest -> convert -> Opportunity + Configuration v1 -> PriceCalculation -> Draft Quote`, one-time and atomic (migration `0007`, DD-027). Command Center shows configurator requests and hands converted configurations to pricing. See `docs/IMPLEMENTATION_SPRINT_6.md`.
+PR #21, migration `0007`, DD-027. Conversion is explicit, atomic and one-time. The Command Center lists configurator requests and can convert one into Opportunity + Configuration using the customer's exact option values, revalidated against the current catalog. The resulting configuration can hand off directly to pricing.
+
+PR #22 fixed a parallel-test race in the rejection E2E test. No production code changed in that fix.
+
+## Production / deployment state
+- Fly.io hosts web, API and managed PostgreSQL.
+- home.pl remains registrar/DNS/mail provider.
+- path-aware GitHub Actions production deployment is enabled.
+- deployment target detection compares against the last verified deployed commit per app, preventing skipped/failed deploys from losing pending changes.
+- current main deploy workflow run 41 succeeded; web was correctly skipped because the latest change was API/test-side, while API deployed and `/ready` verification passed.
+- API private networking uses IPv6-compatible bind (`::`) to support Fly `.internal` traffic.
 
 ## Security / isolation decisions enforced
-- Business reads require explicit `organizationId`.
-- Lead, Opportunity, Product, Configuration, PriceCalculation and Quote lookup boundaries are organization-scoped.
-- Development user auth validates active organization membership and cannot run in production.
-- Public inquiry does not reuse development user headers.
-- Public inquiry organization is server-controlled and cannot be supplied by the browser.
-- Website API credential remains server-side.
-- Public inquiry PII is stored only in the dedicated intake source record and is not duplicated into event/audit payloads.
-- Critical writes share one Unit of Work with audit + event/outbox persistence.
+- business reads require explicit `organizationId`;
+- core repositories and service boundaries are organization-scoped;
+- public routes do not reuse development user headers;
+- public intake organization is server-controlled;
+- public web credentials remain server-side;
+- public intake PII is excluded from event/audit payloads where not needed;
+- critical writes share a Unit of Work with audit + domain event/outbox persistence;
+- sent/accepted future commercial versions must be immutable; correction means new version/change, not overwrite.
 
 ## Deliberate current limitations
-1. External production identity provider for internal/customer accounts is not selected/connected yet.
+1. External production identity provider for internal/customer accounts is still not selected/connected.
 2. Outbox persistence exists; publisher/worker delivery is not implemented yet.
-3. Production observability is not implemented beyond health/readiness, correlation IDs and CI diagnostics.
-4. Quotes are **internal DRAFTS only**. Tax/VAT policy, discounts, approvals, READY/SENT/VIEWED/ACCEPTED transitions and documents are intentionally not claimed yet.
-5. Quote numbering is collision-resistant MVP, not a final fiscal/legal numbering policy.
-6. AI may not autonomously price or bind the business to price/date commitments.
-7. Customer-facing room-photo analysis and visualization are not implemented yet.
+3. Production observability remains limited to health/readiness, correlation IDs, CI/deploy diagnostics and incident notes.
+4. Quotes are internal **DRAFTS only**. VAT/tax, discounts, approvals, buyer snapshot and READY/SENT/VIEWED/ACCEPTED governance are not implemented.
+5. Quote numbering is collision-resistant MVP, not final fiscal/legal numbering policy.
+6. AI may not autonomously set binding prices or delivery dates.
+7. Customer-facing room-photo analysis and generated visualization are not implemented.
 8. Capacity/availability truth is not implemented; the system must not promise production/delivery dates from guesswork.
-9. Public website uses intentional material abstractions until the real Avitus realization media library is connected.
-10. Public production deployment, DNS, production secrets, privacy copy and edge rate limiting are not completed yet.
+9. Public intake still needs a final edge rate-limiting/WAF decision and a mature production observability baseline.
+10. GDPR/privacy lifecycle (retention, anonymization/deletion, consent model) is not yet a complete domain capability.
 
-## First website readiness
-The **first website version is already implemented and merged into `main`**. It can be viewed immediately in a development/Codespaces preview by running `apps/web` on port 3001.
+## Current gap after Sprint 6
+A converted configurator request has:
+- original immutable customer contact/intake data,
+- a Lead,
+- an Opportunity,
+- a Configuration v1,
+- a path to Pricing and Draft Quote,
 
-For a public production v0.1 at `Avitus-Materia.com`, the remaining deployment slice is:
-1. choose/provision production web + API hosting and PostgreSQL,
-2. apply migrations and production environment/secrets,
-3. deploy `apps/web` and `apps/api`,
-4. connect DNS/TLS for `Avitus-Materia.com`,
-5. add edge rate limiting/WAF for public inquiry,
-6. finalize privacy/consent and retention wording,
-7. smoke-test inquiry -> CRM Lead end to end,
-8. replace/add real project photography when the media pack is available.
+but it does **not yet establish the CustomerAccount identity** that should unify the Lead and Opportunity. Sprint 4 already provides the customer model and link invariants; the next slice should connect them explicitly rather than create another contact truth.
 
-The advanced AI Configurator is **not a prerequisite for publishing website v0.1**; it is the next customer-product layer.
+## Sprint 7 — planned
+Target flow:
 
-## Customer-facing strategic pillar
-The AI Product Configurator remains a first-class system surface. Product/Configuration/Pricing are now stable enough to build the guided public configuration flow without creating a parallel truth model. AI/visualization will operate through controlled services and versioned Configuration rather than writing arbitrary commercial state.
+`converted request -> identify/create CustomerAccount -> link same account to Lead + Opportunity -> pricing`
 
-## Future partner network
-Core remains organization-aware to preserve the path to Partner Organizations, capability registry, Work Orders, scoped partner portal and distributed manufacturing orchestration.
+Rules:
+- operator-controlled identity resolution;
+- exact normalized email/phone may suggest an existing account, never silently merge;
+- preserve immutable intake;
+- no silent reassignment of a Lead/Opportunity already linked to another customer;
+- reuse existing CustomerAccount/ContactPoint/LinkCustomerService invariants;
+- prefer no migration unless implementation proves a missing persistence invariant.
+
+See `docs/IMPLEMENTATION_SPRINT_7.md`.
 
 ## Next engineering sequence
-1. Preview and review the first public website on desktop/mobile using real Avitus copy/media feedback.
-2. Create the production/staging deployment slice and connect `Avitus-Materia.com`.
-3. Add real realization media library and structured project content.
-4. Build the first guided public Product Configurator on the existing Product/Configuration/Pricing truth model.
-5. In parallel, continue Quote policy: VAT/tax, margin/discount approvals and controlled transitions to READY/SENT.
-6. Before customer delivery promises, implement BusinessCalendar + capacity/availability estimate truth.
-7. Then extend accepted Quote -> Order / Project.
-8. Add room-photo analysis and generated visualization only after the basic configuration/quote/customer journey is stable.
+1. Implement Sprint 7 customer identity handoff and production-smoke the full request -> conversion -> customer -> pricing path.
+2. Quote governance: buyer snapshot, VAT/tax, discounts/margin approval and controlled `DRAFT -> READY -> SENT` transitions.
+3. BusinessCalendar + capacity/availability truth before customer-facing date promises.
+4. Accepted Quote -> Order / Project.
+5. Outbox worker/integration delivery + production observability.
+6. Customer portal/auth and communication history.
+7. AI-assisted configuration/visualization only on top of controlled tools, versioned truth and explicit policy boundaries.
+8. Partner-network/work-order capabilities after the single-organization operational loop is reliable.
 
 ## Multi-agent coordination
-Active work, reserved migration/decision/sprint numbers and known collisions live in `docs/WORK_BOARD.md`; the protocol is `docs/COORDINATION.md` (DD-023). Customer identity (formerly PR #5, which collided with `main` on migration `0003`, `DD-022` and sprint numbering) is rebuilt as Sprint 4 on current `main` with migration `0004`, DD-024 and `IMPLEMENTATION_SPRINT_4.md`; it replaces PR #5 once green.
+Active work, reserved migration/decision/sprint numbers and collisions live in `docs/WORK_BOARD.md`; protocol is `docs/COORDINATION.md` (DD-023). PRs are the tie-breaker when the board is stale.
 
 ## Project memory rule
-GitHub documentation is the durable project memory. Material architectural/product decisions must be reflected in repository docs rather than relying on chat history alone.
+GitHub documentation is durable project memory. Material product/architecture decisions and validated state must be written back to the repository; chat history is not authoritative.
