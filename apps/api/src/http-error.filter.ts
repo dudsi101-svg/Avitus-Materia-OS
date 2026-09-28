@@ -25,7 +25,9 @@ export class HttpErrorFilter implements ExceptionFilter {
           ? HttpStatus.FORBIDDEN
           : exception.code.endsWith('NOT_FOUND')
             ? HttpStatus.NOT_FOUND
-            : HttpStatus.BAD_REQUEST;
+            : exception.code.endsWith('_CONFLICT')
+              ? HttpStatus.CONFLICT
+              : HttpStatus.BAD_REQUEST;
       response.status(status).json({
         error: { code: exception.code, message: exception.message, details: exception.details },
         correlationId,

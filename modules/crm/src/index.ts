@@ -1,10 +1,11 @@
 import { randomUUID } from 'node:crypto';
-import type { AuditStore } from '@avitus/audit';
+import type { AuditEntry, AuditStore } from '@avitus/audit';
 import { executorFrom, leads, opportunities, type DbExecutor } from '@avitus/database';
 import type { DomainEventStore } from '@avitus/events';
 import {
   DomainError,
   newDomainEvent,
+  type DomainEvent,
   type RequestContext,
   type TransactionContext,
   type UnitOfWork,
@@ -300,6 +301,68 @@ export class PostgresOpportunityRepository implements OpportunityRepository {
   }
 }
 
+export type CreateOpportunityInput = z.infer<typeof createOpportunitySchema>;
+
+/**
+ * Builds a new Opportunity with its event and audit entry without persisting anything, so other
+ * modules can create it inside their own Unit of Work (e.g. acquisition request conversion).
+ * The caller is responsible for authorization and for verifying the Lead.
+ */
+export function planOpportunityCreation(
+  input: CreateOpportunityInput,
+  context: RequestContext,
+): { opportunity: Opportunity; event: DomainEvent; audit: AuditEntry } {
+  const now = new Date();
+  const opportunity: Opportunity = {
+    id: randomUUID(),
+    organizationId: context.organizationId,
+    leadId: input.leadId,
+    ...(context.actor.type === 'USER' ? { ownerUserId: context.actor.id } : {}),
+    title: input.title,
+    ...(input.description ? { description: input.description } : {}),
+    status: 'OPEN',
+    ...(input.estimatedValue !== undefined ? { estimatedValue: input.estimatedValue.toFixed(4) } : {}),
+    currency: input.currency,
+    probability: input.probability,
+    ...(input.expectedCloseDate ? { expectedCloseDate: input.expectedCloseDate } : {}),
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  const event = newDomainEvent({
+    organizationId: context.organizationId,
+    eventType: 'OpportunityCreated',
+    aggregateType: 'Opportunity',
+    aggregateId: opportunity.id,
+    payload: {
+      opportunityId: opportunity.id,
+      leadId: opportunity.leadId,
+      status: opportunity.status,
+      currency: opportunity.currency,
+      probability: opportunity.probability,
+    },
+    correlationId: context.correlationId,
+    actor: context.actor,
+  });
+  const audit: AuditEntry = {
+    organizationId: context.organizationId,
+    actor: context.actor,
+    entityType: 'Opportunity',
+    entityId: opportunity.id,
+    action: 'CREATE',
+    afterData: {
+      id: opportunity.id,
+      leadId: opportunity.leadId,
+      status: opportunity.status,
+      estimatedValue: opportunity.estimatedValue ?? null,
+      currency: opportunity.currency,
+      probability: opportunity.probability,
+    },
+    correlationId: context.correlationId,
+  };
+  return { opportunity, event, audit };
+}
+
 export class CreateOpportunityService {
   constructor(
     private readonly uow: UnitOfWork,
@@ -317,61 +380,12 @@ export class CreateOpportunityService {
     const lead = await this.leads.findById(context.organizationId, input.leadId);
     if (!lead) throw new DomainError('CRM.LEAD_NOT_FOUND', 'Lead was not found in this organization.');
 
-    const now = new Date();
-    const opportunity: Opportunity = {
-      id: randomUUID(),
-      organizationId: context.organizationId,
-      leadId: input.leadId,
-      ...(context.actor.type === 'USER' ? { ownerUserId: context.actor.id } : {}),
-      title: input.title,
-      ...(input.description ? { description: input.description } : {}),
-      status: 'OPEN',
-      ...(input.estimatedValue !== undefined ? { estimatedValue: input.estimatedValue.toFixed(4) } : {}),
-      currency: input.currency,
-      probability: input.probability,
-      ...(input.expectedCloseDate ? { expectedCloseDate: input.expectedCloseDate } : {}),
-      createdAt: now,
-      updatedAt: now,
-    };
-
-    const event = newDomainEvent({
-      organizationId: context.organizationId,
-      eventType: 'OpportunityCreated',
-      aggregateType: 'Opportunity',
-      aggregateId: opportunity.id,
-      payload: {
-        opportunityId: opportunity.id,
-        leadId: opportunity.leadId,
-        status: opportunity.status,
-        currency: opportunity.currency,
-        probability: opportunity.probability,
-      },
-      correlationId: context.correlationId,
-      actor: context.actor,
-    });
+    const { opportunity, event, audit } = planOpportunityCreation(input, context);
 
     await this.uow.run(async (tx) => {
       await this.opportunities.insert(opportunity, tx);
       await this.events.append(event, tx);
-      await this.audit.append(
-        {
-          organizationId: context.organizationId,
-          actor: context.actor,
-          entityType: 'Opportunity',
-          entityId: opportunity.id,
-          action: 'CREATE',
-          afterData: {
-            id: opportunity.id,
-            leadId: opportunity.leadId,
-            status: opportunity.status,
-            estimatedValue: opportunity.estimatedValue ?? null,
-            currency: opportunity.currency,
-            probability: opportunity.probability,
-          },
-          correlationId: context.correlationId,
-        },
-        tx,
-      );
+      await this.audit.append(audit, tx);
     });
     return opportunity;
   }

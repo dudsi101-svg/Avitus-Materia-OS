@@ -16,6 +16,8 @@ export const TOKENS = {
   publicConfigurationRequestRepository: Symbol('publicConfigurationRequestRepository'),
   createPublicConfigurationRequestService: Symbol('createPublicConfigurationRequestService'),
   readPublicCatalogService: Symbol('readPublicCatalogService'),
+  readConfigurationRequestService: Symbol('readConfigurationRequestService'),
+  convertConfigurationRequestService: Symbol('convertConfigurationRequestService'),
   createLeadService: Symbol('createLeadService'),
   readLeadService: Symbol('readLeadService'),
   createOpportunityService: Symbol('createOpportunityService'),
