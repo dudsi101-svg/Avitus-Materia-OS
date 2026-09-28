@@ -9,7 +9,7 @@ _Last updated: 2026-09-28_
 
 | Lane | Owner | Branch | PR | Touches | Status |
 |---|---|---|---|---|---|
-| Sprint 6 — Convert configurator requests into Opportunity + Configuration (Command Center) | Claude (session `ht9hxm`) | `claude/avitus-msteria-project-ht9hxm` | — | `modules/acquisition`, `modules/crm` + `modules/configurator` (exported builders only), migration 0007, `packages/database` (schema, seed permissions), `apps/api` controller + composition root, `apps/admin` | In progress |
+| Sprint 6 — Convert configurator requests into Opportunity + Configuration (Command Center) | Claude (session `ht9hxm`) | `claude/avitus-msteria-project-ht9hxm` | — | `modules/acquisition`, `modules/crm` + `modules/configurator` (exported builders only), migration 0007, `packages/database` (schema, seed permissions), `apps/api` controller + composition root, `apps/admin` | In review |
 
 ## Reservations
 

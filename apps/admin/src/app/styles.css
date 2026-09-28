@@ -33,3 +33,15 @@ button.secondary { background: #eceae1; color: #171717; padding: 8px 10px; }
 .muted { color: #757266; }
 .error { color: #9a1b1b; background: #fff0f0; border-radius: 10px; padding: 10px; }
 @media (max-width: 760px) { .grid, .commercialFlow { grid-template-columns: 1fr; } .hero, .sectionHeading { flex-direction: column; align-items: flex-start; } }
+
+.requestRow { align-items: flex-start; }
+.optionList { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 0; padding: 0; list-style: none; }
+.optionList li { font-size: .78rem; background: #f7f6f1; border: 1px solid #eceae1; border-radius: 999px; padding: 4px 10px; }
+.requestMessage { font-style: italic; }
+.requestActions { display: grid; justify-items: end; gap: 8px; min-width: 180px; }
+.requestActions > span { font-size: .75rem; font-weight: 800; background: #eceae1; border-radius: 999px; padding: 6px 8px; }
+.requestActions small { color: #757266; text-align: right; }
+@media (max-width: 700px) {
+  .requestRow { flex-direction: column; }
+  .requestActions { justify-items: start; }
+}
