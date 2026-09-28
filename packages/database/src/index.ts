@@ -4,12 +4,14 @@ import { Pool } from 'pg';
 import * as coreSchema from './schema';
 import * as acquisitionSchema from './acquisition-schema';
 import * as customerSchema from './customer-schema';
+import * as orderSchema from './order-schema';
 
-const schema = { ...coreSchema, ...acquisitionSchema, ...customerSchema };
+const schema = { ...coreSchema, ...acquisitionSchema, ...customerSchema, ...orderSchema };
 
 export * from './schema';
 export * from './acquisition-schema';
 export * from './customer-schema';
+export * from './order-schema';
 export { STARTER_CATALOG, ensureStarterCatalog, starterId } from './starter-catalog';
 
 export type Database = NodePgDatabase<typeof schema>;
