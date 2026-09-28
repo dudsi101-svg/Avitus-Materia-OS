@@ -55,6 +55,8 @@ function apiHeaders(): HeadersInit {
   };
 }
 
+export const CONFIGURATION_SELECTED_EVENT = 'avitus:configuration-selected';
+
 async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${apiUrl}${path}`, {
     ...init,
@@ -101,6 +103,25 @@ export function SalesFoundationConsole() {
 
   useEffect(() => {
     load().catch((value: unknown) => setError(value instanceof Error ? value.message : 'Load failed'));
+  }, [load]);
+
+  // Hand-off from the configurator-request console: load a converted configuration for pricing.
+  useEffect(() => {
+    function onSelected(event: Event) {
+      const configurationId = (event as CustomEvent<{ configurationId: string }>).detail?.configurationId;
+      if (!configurationId) return;
+      api<Configuration>(`/configurations/${configurationId}`)
+        .then((configuration) => {
+          setLastConfiguration(configuration);
+          setSelectedOpportunity(configuration.opportunityId);
+          setLastPrice(null);
+          setLastQuote(null);
+          return load();
+        })
+        .catch((value: unknown) => setError(value instanceof Error ? value.message : 'Configuration load failed'));
+    }
+    window.addEventListener(CONFIGURATION_SELECTED_EVENT, onSelected);
+    return () => window.removeEventListener(CONFIGURATION_SELECTED_EVENT, onSelected);
   }, [load]);
 
   const product = useMemo(
@@ -219,7 +240,7 @@ export function SalesFoundationConsole() {
   }
 
   return (
-    <section className="salesSection">
+    <section className="salesSection" id="pricing">
       <div className="sectionHeading">
         <div>
           <p className="eyebrow">Sprint 1–2 · Sales & pricing foundation</p>

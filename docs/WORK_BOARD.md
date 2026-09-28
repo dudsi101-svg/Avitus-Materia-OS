@@ -9,7 +9,7 @@ _Last updated: 2026-09-28_
 
 | Lane | Owner | Branch | PR | Touches | Status |
 |---|---|---|---|---|---|
-| Deploy: per-app deployed tags so failed/skipped deploys keep pending changes | Claude (session `ht9hxm`) | `claude/avitus-msteria-project-ht9hxm` | — | `.github/workflows/deploy-fly.yml`, deploy docs | In review |
+| Sprint 6 — Convert configurator requests into Opportunity + Configuration (Command Center) | Claude (session `ht9hxm`) | `claude/avitus-msteria-project-ht9hxm` | — | `modules/acquisition`, `modules/crm` + `modules/configurator` (exported builders only), migration 0007, `packages/database` (schema, seed permissions), `apps/api` controller + composition root, `apps/admin` | In review |
 
 ## Reservations
 
@@ -25,7 +25,8 @@ Take the next free value, write your lane next to it, commit together with your 
 | 0004 | Sprint 4 customer identity | merged |
 | **0005** | Sprint 5 public configuration requests | merged |
 | **0006** | Sprint 5b option presentation metadata | merged |
-| 0007 | _next free_ | — |
+| **0007** | Sprint 6 configuration request conversions | reserved |
+| 0008 | _next free_ | — |
 
 ### Decision IDs (`docs/DECISIONS.md`)
 | ID | Subject | State |
@@ -35,7 +36,8 @@ Take the next free value, write your lane next to it, commit together with your 
 | DD-024 | Customer identity precedes Quote READY/SENT governance | merged |
 | **DD-025** | Public configurator requests: immutable intake snapshot, no auto-Opportunity, no public price | merged |
 | **DD-026** | Option presentation lives in the catalog, not in UI code | merged |
-| DD-027 | _next free_ | — |
+| **DD-027** | Conversion of public configuration requests is explicit, atomic and one-time | reserved |
+| DD-028 | _next free_ | — |
 
 ### Sprint numbers
 | Sprint | Subject | State |
@@ -46,7 +48,8 @@ Take the next free value, write your lane next to it, commit together with your 
 | 3 | Public website v0.1 + inquiry intake | merged |
 | 4 | Customer identity | merged |
 | 5 | Public configurator v1 + 5b | merged |
-| 6 | _next free_ (candidate: Quote governance) | — |
+| **6** | Configuration request → Opportunity + Configuration (owner chose 2026-09-28) | reserved |
+| 7 | _next free_ (candidate: Quote governance) | — |
 
 ## Known collisions
 
@@ -83,5 +86,6 @@ Resolved by rebuilding the lane on current `main` in a new PR (owner approved au
 | Sprint 4 customer identity (replaced #5) | #17 | merged |
 | Sprint 5 / 5b public configurator + extensible options | #18 | merged 2026-09-28 |
 | Sideboard catalog defaults | #19 | merged 2026-09-28 |
+| Deploy target detection per app | #20 | merged 2026-09-28 |
 | Production deploy unblocked (new Fly org token) | — | web + API deployed 2026-09-28 |
 | API dual-stack bind (INC-001), production deploy gate, website v0.4, path-aware Fly deploy | #12–#16 | landed on `main` |

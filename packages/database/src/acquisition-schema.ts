@@ -1,5 +1,5 @@
 import { index, jsonb, pgTable, text, timestamp, uuid, varchar } from 'drizzle-orm/pg-core';
-import { leads, organizations, products } from './schema';
+import { configurations, leads, opportunities, organizations, products } from './schema';
 
 export const publicInquirySubmissions = pgTable('public_inquiry_submissions', {
   id: uuid('id').primaryKey(),
@@ -36,4 +36,16 @@ export const publicConfigurationRequests = pgTable('public_configuration_request
 }, (table) => [
   index('public_configuration_requests_org_created_idx').on(table.organizationId, table.createdAt),
   index('public_configuration_requests_lead_idx').on(table.leadId),
+]);
+
+export const publicConfigurationRequestConversions = pgTable('public_configuration_request_conversions', {
+  requestId: uuid('request_id').primaryKey().references(() => publicConfigurationRequests.id, { onDelete: 'cascade' }),
+  organizationId: uuid('organization_id').notNull().references(() => organizations.id, { onDelete: 'cascade' }),
+  opportunityId: uuid('opportunity_id').notNull().references(() => opportunities.id),
+  configurationId: uuid('configuration_id').notNull().references(() => configurations.id),
+  convertedByActorType: varchar('converted_by_actor_type', { length: 40 }).notNull(),
+  convertedByActorId: uuid('converted_by_actor_id').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index('public_configuration_request_conversions_org_idx').on(table.organizationId, table.createdAt),
 ]);

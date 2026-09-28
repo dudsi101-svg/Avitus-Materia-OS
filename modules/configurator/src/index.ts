@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import type { AuditStore } from '@avitus/audit';
+import type { AuditEntry, AuditStore } from '@avitus/audit';
 import type { Product, ProductOptionDefinition, ProductRepository } from '@avitus/catalog';
 import type { OpportunityRepository } from '@avitus/crm';
 import {
@@ -12,6 +12,7 @@ import type { DomainEventStore } from '@avitus/events';
 import {
   DomainError,
   newDomainEvent,
+  type DomainEvent,
   type RequestContext,
   type TransactionContext,
   type UnitOfWork,
@@ -261,6 +262,77 @@ export function assessConfiguration(
   };
 }
 
+export type CreateConfigurationInput = z.infer<typeof createConfigurationSchema>;
+
+/**
+ * Builds a new Configuration (version 1) with its event and audit entry without persisting anything,
+ * so other modules can create it inside their own Unit of Work. Validates option values against the
+ * product; the caller is responsible for authorization and for verifying the Opportunity.
+ */
+export function planConfigurationCreation(
+  input: CreateConfigurationInput,
+  product: Product,
+  context: RequestContext,
+): { configuration: Configuration; version: ConfigurationVersion; event: DomainEvent; audit: AuditEntry } {
+  const assessment = assessConfiguration(product, input.configurationData);
+  const now = new Date();
+  const configuration: Configuration = {
+    id: randomUUID(),
+    organizationId: context.organizationId,
+    opportunityId: input.opportunityId,
+    productId: input.productId,
+    status: assessment.status,
+    currentVersion: 1,
+    ...(context.actor.type === 'USER' ? { createdByUserId: context.actor.id } : {}),
+    createdByAi: context.actor.type === 'AI_AGENT',
+    createdAt: now,
+    updatedAt: now,
+  };
+  const version: ConfigurationVersion = {
+    id: randomUUID(),
+    organizationId: context.organizationId,
+    configurationId: configuration.id,
+    versionNumber: 1,
+    configurationData: input.configurationData,
+    readinessIssues: assessment.readinessIssues,
+    ...(context.actor.type === 'USER' ? { createdByUserId: context.actor.id } : {}),
+    createdByAi: context.actor.type === 'AI_AGENT',
+    ...(input.reason ? { reason: input.reason } : {}),
+    createdAt: now,
+  };
+  const event = newDomainEvent({
+    organizationId: context.organizationId,
+    eventType: 'ConfigurationCreated',
+    aggregateType: 'Configuration',
+    aggregateId: configuration.id,
+    payload: {
+      configurationId: configuration.id,
+      opportunityId: configuration.opportunityId,
+      productId: configuration.productId,
+      versionNumber: 1,
+      status: configuration.status,
+    },
+    correlationId: context.correlationId,
+    actor: context.actor,
+  });
+  const audit: AuditEntry = {
+    organizationId: context.organizationId,
+    actor: context.actor,
+    entityType: 'Configuration',
+    entityId: configuration.id,
+    action: 'CREATE',
+    afterData: {
+      opportunityId: configuration.opportunityId,
+      productId: configuration.productId,
+      versionNumber: 1,
+      status: configuration.status,
+      readinessIssues: version.readinessIssues,
+    },
+    correlationId: context.correlationId,
+  };
+  return { configuration, version, event, audit };
+}
+
 export class CreateConfigurationService {
   constructor(
     private readonly uow: UnitOfWork,
@@ -283,69 +355,12 @@ export class CreateConfigurationService {
     const product = await this.products.findActiveById(context.organizationId, input.productId);
     if (!product) throw new DomainError('CATALOG.PRODUCT_NOT_FOUND', 'Product was not found in this organization.');
 
-    const assessment = assessConfiguration(product, input.configurationData);
-    const now = new Date();
-    const configuration: Configuration = {
-      id: randomUUID(),
-      organizationId: context.organizationId,
-      opportunityId: input.opportunityId,
-      productId: input.productId,
-      status: assessment.status,
-      currentVersion: 1,
-      ...(context.actor.type === 'USER' ? { createdByUserId: context.actor.id } : {}),
-      createdByAi: context.actor.type === 'AI_AGENT',
-      createdAt: now,
-      updatedAt: now,
-    };
-    const version: ConfigurationVersion = {
-      id: randomUUID(),
-      organizationId: context.organizationId,
-      configurationId: configuration.id,
-      versionNumber: 1,
-      configurationData: input.configurationData,
-      readinessIssues: assessment.readinessIssues,
-      ...(context.actor.type === 'USER' ? { createdByUserId: context.actor.id } : {}),
-      createdByAi: context.actor.type === 'AI_AGENT',
-      ...(input.reason ? { reason: input.reason } : {}),
-      createdAt: now,
-    };
-    const event = newDomainEvent({
-      organizationId: context.organizationId,
-      eventType: 'ConfigurationCreated',
-      aggregateType: 'Configuration',
-      aggregateId: configuration.id,
-      payload: {
-        configurationId: configuration.id,
-        opportunityId: configuration.opportunityId,
-        productId: configuration.productId,
-        versionNumber: 1,
-        status: configuration.status,
-      },
-      correlationId: context.correlationId,
-      actor: context.actor,
-    });
+    const { configuration, version, event, audit } = planConfigurationCreation(input, product, context);
 
     await this.uow.run(async (tx) => {
       await this.configurations.insert(configuration, version, tx);
       await this.events.append(event, tx);
-      await this.audit.append(
-        {
-          organizationId: context.organizationId,
-          actor: context.actor,
-          entityType: 'Configuration',
-          entityId: configuration.id,
-          action: 'CREATE',
-          afterData: {
-            opportunityId: configuration.opportunityId,
-            productId: configuration.productId,
-            versionNumber: 1,
-            status: configuration.status,
-            readinessIssues: version.readinessIssues,
-          },
-          correlationId: context.correlationId,
-        },
-        tx,
-      );
+      await this.audit.append(audit, tx);
     });
     return { ...configuration, versions: [version] };
   }

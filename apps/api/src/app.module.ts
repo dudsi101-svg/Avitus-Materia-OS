@@ -1,8 +1,11 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import {
+  ConvertConfigurationRequestService,
   CreatePublicConfigurationRequestService,
   CreatePublicInquiryService,
+  PostgresConfigurationRequestRepository,
+  ReadConfigurationRequestService,
   PostgresPublicConfigurationRequestRepository,
   PostgresPublicInquiryRepository,
 } from '@avitus/acquisition';
@@ -47,6 +50,7 @@ import {
   ReviseQuoteService,
 } from '@avitus/quotes';
 import { CatalogController } from './catalog.controller';
+import { ConfigurationRequestsController } from './configuration-requests.controller';
 import { ConfigurationsController } from './configurations.controller';
 import { CrmController } from './crm.controller';
 import { CustomersController } from './customers.controller';
@@ -65,6 +69,7 @@ const connection = createDatabase(config.DATABASE_URL);
 const leadRepository = new PostgresLeadRepository(connection.db);
 const publicInquiryRepository = new PostgresPublicInquiryRepository(connection.db);
 const publicConfigurationRequestRepository = new PostgresPublicConfigurationRequestRepository(connection.db);
+const configurationRequestRepository = new PostgresConfigurationRequestRepository(connection.db);
 const opportunityRepository = new PostgresOpportunityRepository(connection.db);
 const productRepository = new PostgresProductRepository(connection.db);
 const configurationRepository = new PostgresConfigurationRepository(connection.db);
@@ -82,6 +87,7 @@ const eventStore = new PostgresDomainEventStore(connection.db);
     HealthController,
     PublicInquiriesController,
     PublicConfiguratorController,
+    ConfigurationRequestsController,
     CrmController,
     OpportunitiesController,
     CustomersController,
@@ -127,6 +133,23 @@ const eventStore = new PostgresDomainEventStore(connection.db);
       ),
     },
     { provide: TOKENS.readPublicCatalogService, useValue: new ReadPublicCatalogService(productRepository) },
+    {
+      provide: TOKENS.readConfigurationRequestService,
+      useValue: new ReadConfigurationRequestService(configurationRequestRepository),
+    },
+    {
+      provide: TOKENS.convertConfigurationRequestService,
+      useValue: new ConvertConfigurationRequestService(
+        uow,
+        configurationRequestRepository,
+        configurationRequestRepository,
+        productRepository,
+        opportunityRepository,
+        configurationRepository,
+        eventStore,
+        auditStore,
+      ),
+    },
     {
       provide: TOKENS.createLeadService,
       useValue: new CreateLeadService(uow, leadRepository, eventStore, auditStore),

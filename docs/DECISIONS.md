@@ -161,6 +161,11 @@ A customer configuration sent from the public website creates a CRM Lead and an 
 
 Customer-facing presentation of catalog options (group, hint, slider step, choice labels, descriptions, swatches) is stored as `product_option_definitions.presentation` (migration `0006`). It never changes what the Core accepts: validation stays in the typed columns (`data_type`, ranges, `choices`). The catalog parses presentation defensively (malformed data is ignored) and the public projection exposes it. New options and products are added as data; the website renders NUMBER, ENUM, BOOLEAN and TEXT options generically. Configurations are shareable through URL parameters that are re-validated against the catalog on load.
 
+## DD-027 — Conversion of public configuration requests is explicit, atomic and one-time
+**Status:** Accepted (Sprint 6)
+
+An operator converts a `PublicConfigurationRequest` into an Opportunity (on the request's Lead) plus Configuration v1 with the customer's exact values, re-validated against the current catalog. `crm` and `configurator` expose pure creation builders; acquisition persists their output through the modules' repositories in one Unit of Work with a conversion record whose primary key is the request id (one-time, concurrency-safe; conflicts return HTTP 409). The intake record remains immutable. Details: `docs/IMPLEMENTATION_SPRINT_6.md`.
+
 ## Open decisions for Technical Architecture v0.4
 - Authentication provider
 - Object storage provider

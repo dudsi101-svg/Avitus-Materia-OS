@@ -135,6 +135,9 @@ Established:
 - fallback to the static v0.4 configurator when the API is unreachable
 - Sprint 5b: option presentation in the catalog (migration `0006`, DD-026), new options (thickness, edge, finish, sideboard height), grouped generic option rendering, true-scale drawing, shareable configuration link
 
+## Sprint 6 — configurator request → Opportunity + Configuration (in review)
+`PublicConfigurationRequest -> convert -> Opportunity + Configuration v1 -> PriceCalculation -> Draft Quote`, one-time and atomic (migration `0007`, DD-027). Command Center shows configurator requests and hands converted configurations to pricing. See `docs/IMPLEMENTATION_SPRINT_6.md`.
+
 ## Security / isolation decisions enforced
 - Business reads require explicit `organizationId`.
 - Lead, Opportunity, Product, Configuration, PriceCalculation and Quote lookup boundaries are organization-scoped.
