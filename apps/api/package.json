@@ -21,7 +21,6 @@
     "@avitus/database": "workspace:*",
     "@avitus/events": "workspace:*",
     "@avitus/iam": "workspace:*",
-    "@avitus/orders": "workspace:*",
     "@avitus/pricing": "workspace:*",
     "@avitus/quotes": "workspace:*",
     "@avitus/shared": "workspace:*",
