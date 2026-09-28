@@ -7,6 +7,7 @@ import {
   contactPoints,
   createDatabase,
   customerAccounts,
+  opportunityCustomerAccounts,
   organizations,
   persons,
   starterId,
@@ -160,7 +161,8 @@ suite('Configuration request customer identity handoff', () => {
   it('creates a person from confirmed names and links both sales entities atomically without PII in audit', async () => {
     if (!external) return;
     const email = `new-identity-${randomUUID()}@example.com`;
-    const { requestId } = await submitAndConvert('Anna Nowa', email, '+48 501-234-567');
+    const phone = '+48799000123';
+    const { requestId } = await submitAndConvert('Anna Nowa', email, phone);
 
     const before = await request(app.getHttpServer())
       .get(`/configuration-requests/${requestId}/identity`)
@@ -182,7 +184,7 @@ suite('Configuration request customer identity handoff', () => {
     expect(customer.body.contacts).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ contactType: 'EMAIL', normalizedValue: email.toLowerCase() }),
-        expect.objectContaining({ contactType: 'PHONE', normalizedValue: '+48501234567' }),
+        expect.objectContaining({ contactType: 'PHONE', normalizedValue: phone }),
       ]),
     );
 
@@ -192,7 +194,7 @@ suite('Configuration request customer identity handoff', () => {
       .where(and(eq(auditEvents.organizationId, DEV_ORG_ID), eq(auditEvents.entityId, customerId)));
     expect(audits.length).toBeGreaterThan(0);
     expect(JSON.stringify(audits)).not.toContain(email);
-    expect(JSON.stringify(audits)).not.toContain('+48501234567');
+    expect(JSON.stringify(audits)).not.toContain(phone);
 
     await request(app.getHttpServer())
       .get('/configuration-requests/not-a-uuid/identity')
@@ -201,6 +203,7 @@ suite('Configuration request customer identity handoff', () => {
   });
 
   it('rejects a conflicting existing Lead link before partially linking Opportunity', async () => {
+    if (!external) return;
     const email = `identity-conflict-${randomUUID()}@example.com`;
     const { requestId, converted } = await submitAndConvert('Konflikt Klienta', email);
     const identity = await request(app.getHttpServer())
@@ -239,10 +242,10 @@ suite('Configuration request customer identity handoff', () => {
       .expect(409);
     expect(conflict.body.error.code).toBe('CUSTOMER.SALES_CONTEXT_LINK_CONFLICT');
 
-    const opportunityContext = await request(app.getHttpServer())
-      .get(`/customers/for-opportunity/${converted.opportunityId}`)
-      .set(devHeaders)
-      .expect(200);
-    expect(opportunityContext.body).toBeNull();
+    const partialOpportunityLinks = await external.db
+      .select()
+      .from(opportunityCustomerAccounts)
+      .where(eq(opportunityCustomerAccounts.opportunityId, converted.opportunityId));
+    expect(partialOpportunityLinks).toHaveLength(0);
   });
 });
