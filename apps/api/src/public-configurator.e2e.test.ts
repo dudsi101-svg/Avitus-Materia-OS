@@ -1,4 +1,5 @@
 import 'reflect-metadata';
+import { randomUUID } from 'node:crypto';
 import type { INestApplication } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import {
@@ -159,7 +160,8 @@ suite('Public configurator API', () => {
 
   it('rejects values outside the catalog rules without creating state', async () => {
     if (!external || !publicKey) return;
-    const before = await external.db.select().from(publicConfigurationRequests);
+    // Unique email: other suites write to the same table in parallel, so count only this attempt.
+    const email = `range-${randomUUID()}@example.com`;
     const response = await request(app.getHttpServer())
       .post('/public/configurator/requests')
       .set('x-avitus-public-inquiry-key', publicKey)
@@ -167,11 +169,14 @@ suite('Public configurator API', () => {
         productId: tableId,
         values: { width_cm: 999, depth_cm: 100, material: 'PLASTIK', base: 'DREWNO' },
         name: 'Zły Zakres',
-        email: 'range@example.com',
+        email,
       })
       .expect(400);
     expect(response.body.error.code).toMatch(/^CONFIGURATION\./);
-    const after = await external.db.select().from(publicConfigurationRequests);
-    expect(after).toHaveLength(before.length);
+    const stored = await external.db
+      .select()
+      .from(publicConfigurationRequests)
+      .where(eq(publicConfigurationRequests.email, email));
+    expect(stored).toHaveLength(0);
   });
 });
