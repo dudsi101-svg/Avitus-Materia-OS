@@ -59,7 +59,15 @@ import { ConfigurationsController } from './configurations.controller';
 import { CrmController } from './crm.controller';
 import { CustomersController } from './customers.controller';
 import { HealthController } from './health.controller';
+import {
+  AcceptQuoteService,
+  CreateOrderFromAcceptedQuoteService,
+  PostgresOrderFlowRepository,
+  ReadOrderService,
+  ReadProjectService,
+} from './order-flow';
 import { OpportunitiesController } from './opportunities.controller';
+import { OrdersController } from './orders.controller';
 import { PricingController } from './pricing.controller';
 import { PublicConfiguratorController } from './public-configurator.controller';
 import { PublicInquiriesController } from './public-inquiries.controller';
@@ -82,6 +90,7 @@ const priceCalculationRepository = new PostgresPriceCalculationRepository(connec
 const quoteRepository = new PostgresQuoteRepository(connection.db);
 const customerAccountRepository = new PostgresCustomerAccountRepository(connection.db);
 const customerLinkRepository = new PostgresCustomerLinkRepository(connection.db);
+const orderFlowRepository = new PostgresOrderFlowRepository(connection.db);
 const identityRepository = new PostgresIdentityRepository(connection.db);
 const uow = new PostgresUnitOfWork(connection.db);
 const auditStore = new PostgresAuditStore(connection.db);
@@ -135,6 +144,17 @@ const quoteGovernanceService = new QuoteGovernanceService(
   readyQuoteService,
   sendQuoteService,
 );
+const acceptQuoteService = new AcceptQuoteService(uow, quoteRepository, orderFlowRepository, eventStore, auditStore);
+const createOrderFromAcceptedQuoteService = new CreateOrderFromAcceptedQuoteService(
+  uow,
+  quoteRepository,
+  customerLinkRepository,
+  orderFlowRepository,
+  eventStore,
+  auditStore,
+);
+const readOrderService = new ReadOrderService(orderFlowRepository);
+const readProjectService = new ReadProjectService(orderFlowRepository);
 
 @Module({
   controllers: [
@@ -149,6 +169,7 @@ const quoteGovernanceService = new QuoteGovernanceService(
     ConfigurationsController,
     PricingController,
     QuotesController,
+    OrdersController,
   ],
   providers: [
     { provide: TOKENS.config, useValue: config },
@@ -164,6 +185,7 @@ const quoteGovernanceService = new QuoteGovernanceService(
     { provide: TOKENS.quoteRepository, useValue: quoteRepository },
     { provide: TOKENS.customerAccountRepository, useValue: customerAccountRepository },
     { provide: TOKENS.customerLinkRepository, useValue: customerLinkRepository },
+    { provide: TOKENS.orderFlowRepository, useValue: orderFlowRepository },
     {
       provide: TOKENS.createPublicInquiryService,
       useValue: new CreatePublicInquiryService(uow, leadRepository, publicInquiryRepository, eventStore, auditStore),
@@ -241,6 +263,10 @@ const quoteGovernanceService = new QuoteGovernanceService(
     { provide: TOKENS.readyQuoteService, useValue: readyQuoteService },
     { provide: TOKENS.sendQuoteService, useValue: sendQuoteService },
     { provide: TOKENS.quoteGovernanceService, useValue: quoteGovernanceService },
+    { provide: TOKENS.acceptQuoteService, useValue: acceptQuoteService },
+    { provide: TOKENS.createOrderFromAcceptedQuoteService, useValue: createOrderFromAcceptedQuoteService },
+    { provide: TOKENS.readOrderService, useValue: readOrderService },
+    { provide: TOKENS.readProjectService, useValue: readProjectService },
     { provide: APP_GUARD, useClass: DevelopmentAuthGuard },
     { provide: APP_FILTER, useClass: HttpErrorFilter },
   ],
