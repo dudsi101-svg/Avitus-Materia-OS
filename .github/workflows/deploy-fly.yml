@@ -10,7 +10,8 @@ concurrency:
   cancel-in-progress: false
 
 permissions:
-  contents: read
+  # write: moves the deployed-web / deployed-api tags after a verified deploy.
+  contents: write
 
 jobs:
   deploy:
@@ -27,30 +28,44 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.workflow_run.head_sha }}
-          fetch-depth: 2
+          fetch-depth: 0
 
       - name: Detect deploy targets
         id: changes
         shell: bash
         run: |
           set -euo pipefail
-          if git rev-parse HEAD^ >/dev/null 2>&1; then
-            git diff --name-only HEAD^ HEAD > /tmp/changed-files.txt
-          else
-            git ls-tree -r --name-only HEAD > /tmp/changed-files.txt
-          fi
+          git fetch --force --tags origin 'refs/tags/deployed-*:refs/tags/deployed-*' || true
 
-          echo "Changed files:"
-          cat /tmp/changed-files.txt
+          # Compare against what is actually running for each app (tag moved after each
+          # verified deploy), so a failed or skipped deploy never loses pending changes.
+          # Without a tag, fall back to the previous commit.
+          changed_since() {
+            local tag="$1"
+            if git rev-parse -q --verify "refs/tags/${tag}" >/dev/null; then
+              echo "Base for ${tag}: $(git rev-parse --short "refs/tags/${tag}")" >&2
+              git diff --name-only "refs/tags/${tag}" HEAD
+            elif git rev-parse -q --verify HEAD^ >/dev/null; then
+              echo "Base for ${tag}: HEAD^ (no tag yet)" >&2
+              git diff --name-only HEAD^ HEAD
+            else
+              git ls-tree -r --name-only HEAD
+            fi
+          }
+
+          changed_since deployed-web > /tmp/changed-web.txt
+          changed_since deployed-api > /tmp/changed-api.txt
+          echo "Changed since deployed web:"; cat /tmp/changed-web.txt
+          echo "Changed since deployed API:"; cat /tmp/changed-api.txt
 
           deploy_web=false
           deploy_api=false
 
-          if grep -Eq '^(apps/web/|Dockerfile\.web$|fly\.web\.toml$|package\.json$|pnpm-lock\.yaml$|pnpm-workspace\.yaml$|packages/config/)' /tmp/changed-files.txt; then
+          if grep -Eq '^(apps/web/|Dockerfile\.web$|fly\.web\.toml$|package\.json$|pnpm-lock\.yaml$|pnpm-workspace\.yaml$|packages/config/)' /tmp/changed-web.txt; then
             deploy_web=true
           fi
 
-          if grep -Eq '^(apps/api/|Dockerfile\.api$|fly\.api\.toml$|modules/|packages/database/|packages/config/|package\.json$|pnpm-lock\.yaml$|pnpm-workspace\.yaml$)' /tmp/changed-files.txt; then
+          if grep -Eq '^(apps/api/|Dockerfile\.api$|fly\.api\.toml$|modules/|packages/database/|packages/config/|package\.json$|pnpm-lock\.yaml$|pnpm-workspace\.yaml$)' /tmp/changed-api.txt; then
             deploy_api=true
           fi
 
@@ -89,6 +104,12 @@ jobs:
           echo "Web health check failed."
           exit 1
 
+      - name: Record deployed web commit
+        if: steps.changes.outputs.deploy_web == 'true'
+        run: |
+          git tag -f deployed-web HEAD
+          git push -f origin refs/tags/deployed-web
+
       - name: Deploy API
         if: steps.changes.outputs.deploy_api == 'true'
         run: flyctl deploy -c fly.api.toml -a "$FLY_API_APP" --remote-only
@@ -106,6 +127,12 @@ jobs:
           done
           echo "API readiness check failed."
           exit 1
+
+      - name: Record deployed API commit
+        if: steps.changes.outputs.deploy_api == 'true'
+        run: |
+          git tag -f deployed-api HEAD
+          git push -f origin refs/tags/deployed-api
 
       - name: No production deploy needed
         if: steps.changes.outputs.deploy_web != 'true' && steps.changes.outputs.deploy_api != 'true'
