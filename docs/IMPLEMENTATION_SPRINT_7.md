@@ -1,9 +1,9 @@
 # Implementation Sprint 7 — Customer identity handoff from configurator request
 
-**Status:** planned / claimed  
+**Status:** implementation in progress  
 **Date:** 2026-09-28  
 **Owner:** GPT/Writer  
-**Branch:** `writer/state-sync-sprint7-plan`
+**Branch:** `writer/sprint7-customer-identity-handoff`
 
 ## Goal
 Close the identity gap between a public configurator request and the commercial objects created in Sprint 6.
@@ -15,7 +15,7 @@ Target operator flow:
 The operator should be able to keep the customer's original request intact, create or choose the correct customer identity, and attach that identity consistently to both the source Lead and the resulting Opportunity.
 
 ## Why this is the next coherent slice
-Sprint 4 already established `Person | Company -> CustomerAccount -> ContactPoint` plus explicit Lead/Opportunity links. Sprint 6 intentionally creates Opportunity + Configuration from the immutable request but does not create or link a customer. The next step should connect those existing models rather than invent another contact truth.
+Sprint 4 already established `Person | Company -> CustomerAccount -> ContactPoint` plus explicit Lead/Opportunity links. Sprint 6 intentionally creates Opportunity + Configuration from the immutable request but does not create or link a customer. The next step connects those existing models rather than inventing another contact truth.
 
 This directly improves:
 - sales continuity,
@@ -30,11 +30,11 @@ This directly improves:
 - Sprint 6 conversion records `requestId`, `opportunityId`, `configurationId`, converting actor and timestamp.
 - CustomerAccount supports PERSON and COMPANY subjects.
 - ContactPoint supports EMAIL, PHONE, WHATSAPP and OTHER, with normalized values and primary-contact rules.
-- `LinkCustomerService` already enforces explicit organization-scoped linking for Lead and Opportunity and blocks silent reassignment.
-- No migration is obviously required for the base flow; Sprint 7 should prefer existing tables unless implementation proves a missing invariant.
+- Existing customer link repositories enforce explicit organization-scoped linking for Lead and Opportunity and block silent reassignment.
+- No migration is required for the base Sprint 7 flow.
 
 ## Product rule
-Identity resolution must remain **explicit and operator-controlled**.
+Identity resolution remains **explicit and operator-controlled**.
 
 The system may suggest an existing CustomerAccount based on normalized email/phone, but it must not:
 - silently merge customers,
@@ -42,89 +42,94 @@ The system may suggest an existing CustomerAccount based on normalized email/pho
 - overwrite existing contact data from the intake record,
 - treat an email/phone match as proof of identity without operator confirmation.
 
-## Proposed smallest coherent implementation
+## Implemented design on this branch
 
-### 1. Customer lookup by normalized contact
-Add a read capability in `modules/customers` that can return candidate accounts for an EMAIL and/or PHONE contact inside one organization.
+### 1. Configuration-request identity projection
+`apps/api/src/configuration-request-identity.service.ts` is an application-layer orchestration service over the existing acquisition/customer repositories. It returns:
+- Lead customer account link,
+- converted Opportunity customer account link,
+- one explicit state: `NOT_CONVERTED`, `UNLINKED`, `SUGGESTED`, `LINKED`, `CONFLICT`,
+- exact same-organization candidate matches by normalized email and phone,
+- a safe customer summary rather than arbitrary raw persistence data.
 
-Requirements:
-- organization-scoped query;
-- normalized through existing customer normalization rules;
-- no cross-tenant results;
-- exact contact matching first;
-- return stable account summary, not arbitrary raw persistence rows;
-- read permission required.
+The immutable public intake row is never rewritten.
 
-### 2. Request identity projection
-Extend the internal configurator-request view used by the Command Center with identity status derived from existing links:
-- source Lead customer account, if any;
-- converted Opportunity customer account, if any;
-- whether both point to the same account;
-- candidate matches based on request email/phone.
+### 2. Exact candidate matching
+Candidate discovery reuses the established customer contact normalization rules. Email is always normalized; an optional public-request phone that cannot be normalized is not promoted into customer truth and does not block email matching.
 
-Do not mutate the immutable intake record.
+The current implementation evaluates the organization-scoped CustomerAccount projection already exposed by the customer repository. This is intentionally correct-first for the current company scale. Before very large customer volumes, candidate lookup should move to the existing `contact_points_org_lookup_idx` direct repository query without changing the API contract.
 
 ### 3. Explicit actions
 For a converted request the operator can:
 
 **A. Link existing customer**
-- select a candidate or another CustomerAccount;
-- link that account to the source Lead;
-- link the same account to the converted Opportunity;
-- perform both inside one Unit of Work where feasible;
-- preserve existing no-reassignment invariant.
+- choose an exact candidate;
+- preflight both existing links;
+- bind the same account to source Lead and converted Opportunity inside one Unit of Work;
+- emit the established link events/audits only for links that actually changed;
+- repeat the same action idempotently;
+- reject conflicting prior links before partial mutation.
 
 **B. Create person customer from request**
-- require operator confirmation of parsed first/last name before write;
-- create `CustomerAccount(PERSON)` with request email and optional phone as ContactPoints;
-- link it to both Lead and Opportunity;
-- keep PII out of audit/event payloads beyond the existing safe summary policy.
+- require explicitly confirmed first and last name;
+- create a `CustomerAccount(PERSON)` using request email and a valid optional phone;
+- bind the newly created account to Lead and Opportunity in the same Unit of Work as account creation;
+- roll back the account creation if a concurrent link prevents a coherent pair;
+- keep request PII out of audit/event payloads.
 
-Company creation is deliberately not automatic from a free-text public request because the request does not currently carry legal company identity. Existing company accounts may still be selected manually.
+Company creation remains manual because a free-text public request does not contain legal company identity.
 
-### 4. Command Center UX
-In the configurator-request section, after conversion show one clear identity state:
+### 4. API surface
+Internal authenticated endpoints:
+- `GET /configuration-requests/:id/identity`
+- `POST /configuration-requests/:id/identity/link-existing`
+- `POST /configuration-requests/:id/identity/create-person`
+
+No new public route, permission, migration or architecture decision is introduced.
+
+### 5. Command Center UX
+The configurator-request section now surfaces:
 - `Klient niepowiązany`
 - `Proponowany istniejący klient`
 - `Klient powiązany`
 - `Konflikt powiązania`
 
-Actions should be explicit and reversible only through existing governed customer-link rules. Do not bury identity changes inside the pricing button.
+The operator can explicitly select a candidate or confirm first/last name and create a person account. Pricing remains available after conversion and preserves the selected Configuration.
 
 ## Permissions
-Likely reuse:
+Reused:
 - `acquisition.configuration_request.read`
 - `customer.account.read`
 - `customer.account.write` when creating a new account
 - `customer.link.write`
 
-No new permission should be added unless the implementation reveals a genuinely distinct business capability.
+## Audit / event behavior
+Sprint 7 reuses the semantic event names established by Sprint 4:
+- `CustomerAccountCreated`
+- `CustomerLinkedToLead`
+- `CustomerLinkedToOpportunity`
 
-## Audit / event expectations
-Creating a CustomerAccount already emits the established customer event/audit record.
-Linking Lead and Opportunity already emits link events/audits.
-
-If Sprint 7 introduces one orchestration service that creates + links atomically, reuse the underlying domain planning/commands rather than bypassing their invariants. A new orchestration-level event is optional; do not duplicate PII into event/outbox payloads.
+Audit/event payloads carry identifiers, account type/status and contact *types* only. They do not copy request email, phone, name or message.
 
 ## Error / conflict behavior
-- request not found -> 404-style domain mapping;
-- request not converted -> explicit domain error;
-- selected CustomerAccount not found in organization -> 404;
-- Lead or Opportunity already linked to another account -> conflict, no partial relink;
-- duplicate contact / invalid phone -> existing customer-domain validation;
-- concurrent operator clicks must not create inconsistent Lead/Opportunity customer links.
+- request not found / malformed UUID -> `ACQUISITION.REQUEST_NOT_FOUND`;
+- request not converted -> `ACQUISITION.REQUEST_NOT_CONVERTED`;
+- selected CustomerAccount not found in organization -> `CUSTOMER.ACCOUNT_NOT_FOUND`;
+- mismatched existing Lead/Opportunity link -> `CUSTOMER.SALES_CONTEXT_LINK_CONFLICT` (HTTP 409 under the existing `_CONFLICT` mapping);
+- concurrent inconsistent link during person creation -> same conflict and transaction rollback.
 
-## Tests required
-At minimum:
-1. candidate lookup finds same-organization email match;
-2. candidate lookup never leaks another organization;
-3. link-existing attaches the same account to Lead + Opportunity;
-4. repeated same-account action is idempotent;
-5. conflicting prior link aborts without partial second link;
-6. create-person-from-request stores normalized email/phone and links both sales entities;
-7. audit/events contain identifiers/status only, not request PII;
-8. malformed IDs do not cause 500;
-9. Command Center can continue from linked customer to pricing without losing selected configuration.
+## Tests on this branch
+`configuration-request-identity.e2e.test.ts` covers:
+1. same-organization exact email candidate lookup;
+2. foreign-organization match exclusion;
+3. atomic link-existing to Lead + Opportunity;
+4. repeat link idempotency;
+5. create-person with normalized email/phone and coherent dual link;
+6. PII exclusion from CustomerAccount audit records;
+7. malformed request id -> 404;
+8. conflicting prior Lead link -> 409 with Opportunity left unlinked.
+
+The existing Sprint 6 conversion tests continue to cover preserved Configuration values and pricing handoff.
 
 ## Non-goals
 - probabilistic/fuzzy identity matching;
@@ -137,7 +142,7 @@ At minimum:
 - marketing consent model.
 
 ## Definition of Done
-Sprint 7 is complete when an operator can take a real public configurator request, convert it, explicitly establish the correct CustomerAccount, see the same account linked to both Lead and Opportunity, and continue to pricing with tenant isolation, auditability, conflict safety and CI coverage intact.
+Sprint 7 is complete when CI is green and an operator can take a real public configurator request, convert it, explicitly establish the correct CustomerAccount, see the same account linked to both Lead and Opportunity, and continue to pricing with tenant isolation, auditability and conflict safety intact.
 
 ## Next after Sprint 7
-The next high-value commercial slice is Quote governance: buyer snapshot, VAT/tax rules, margin/discount approvals and controlled `DRAFT -> READY -> SENT` transitions. That work should consume the customer identity established here rather than recreate buyer data ad hoc.
+Run the real production journey end to end. After that, start Quote governance: buyer snapshot, VAT/tax rules, margin/discount approvals and controlled `DRAFT -> READY -> SENT` transitions. That work must consume the customer identity established here rather than recreate buyer data ad hoc.
