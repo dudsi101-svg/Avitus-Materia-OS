@@ -1,9 +1,9 @@
 # Implementation Sprint 9 — Accepted Quote -> Order + Project
 
-**Status:** planned / claimed  
-**Date:** 2026-09-28  
-**Owner:** GPT/Writer  
-**Branch:** `writer/post-sprint8-state-sprint9-plan`  
+**Status:** API implementation merged (PR #28), CI #136 passed, API deployed (#78); UI and full gate verification incomplete
+**Date:** 2026-09-28
+**Owner:** GPT/Writer
+**Branch:** `writer/post-sprint8-state-sprint9-plan`
 **Reserved:** migration `0009`, decision `DD-029`
 
 ## Goal
@@ -26,6 +26,12 @@ Sprint 8 established a governed, immutable customer-ready QuoteVersion with buye
 5. Project is a separate operational aggregate linked to Order/configuration.
 6. No promised completion date is invented in Sprint 9. Scheduling comes only after BusinessCalendar/capacity truth.
 7. No production/material status is overloaded onto Order.
+
+## Reconciled implementation (2026-09-28)
+
+Actual persistence uses a separate `quote_acceptances` table, not accepted columns on quotes. Sequential replay returns the existing acceptance/order/project; it does not return duplicate-conversion 409. `order.create` authorizes atomic creation of its Project; a separate project.create check is not implemented. Admin controls below are still planned. One happy-path API E2E exists; required tenant/permission/race/rollback tests below are not all implemented. Full detail: SYSTEM_RECONCILIATION_2026-09-28.md.
+
+The following design sections are original planning context; where they differ, the reconciled implementation above and source code describe delivered behavior.
 
 ## Proposed persistence — migration `0009`
 
@@ -50,7 +56,7 @@ Minimum fields:
 - `currency varchar(3)`;
 - `subtotal`, `discount_amount`, `tax_amount`, `total`, `estimated_cost`, `margin_amount`, `margin_bps` as accepted snapshot values;
 - `buyer_snapshot jsonb` copied from the accepted QuoteVersion;
-- status initially `CONFIRMED` (or smallest commercial lifecycle enum); 
+- status initially `CONFIRMED` (or smallest commercial lifecycle enum);
 - timestamps / creator.
 
 Unique constraint on `(organization_id, quote_id)` (or quote id if globally unique) makes conversion one-time.
@@ -75,7 +81,7 @@ Preconditions:
 - permission to record acceptance;
 - Quote exists in organization;
 - current status is `SENT` (optionally `VIEWED`/`NEGOTIATION` only when explicitly approved by policy; smallest v1 = SENT only);
-- current QuoteVersion exists and is governed (buyer snapshot/tax/validity); 
+- current QuoteVersion exists and is governed (buyer snapshot/tax/validity);
 - quote not expired/withdrawn;
 - current version is the version recorded as accepted.
 
@@ -179,4 +185,4 @@ No buyer email/phone in append-only event/audit payloads. Order itself may conta
 Sprint 9 is complete when a governed SENT Quote can be explicitly accepted, the exact accepted QuoteVersion becomes immutable commercial source of one Order, and one separate Project is atomically created for operational planning, with tenant isolation, audit/events, concurrency protection and CI coverage.
 
 ## Next after Sprint 9
-Build **BusinessCalendar + capacity/availability truth** and then material/production execution. Only after those truths exist should the system calculate or communicate dependable production/delivery dates.
+First close production hardening and identity gates, then complete Order/Project operational scope and verified Physical Truth. Build capacity recommendations only after measured resources and execution data exist. See the revised ROADMAP.

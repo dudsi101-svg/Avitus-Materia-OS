@@ -1,5 +1,15 @@
 # Avitus Materia OS — Roadmap
 
+## Execution order after reconciliation (2026-09-28)
+
+The owner master program supersedes the former implementation order below. F-sections remain scope references, not completion claims. Current baseline: Sprints 0–9 merged; API minimal Order/Project deployed; no production operator login or closed manufacturing loop.
+
+**Gate 1 hardening/recovery/alerts -> Gate 2 identity/operator -> complete Gates 3–5 commercial/Order/Project -> Gate 6 verified physical/material truth -> Gate 7 production/QC -> Gate 8 measured capacity -> delivery -> Gate 9 actual cost/contribution -> real v1 pilot -> Gate 10 automation -> Gate 11 AI -> Gate 12 partners.**
+
+Physical data collection can proceed during hardening. F1.5 AI, F3.5 scene visualization and F4 marketing intelligence are deferred until they support, rather than distract from, the closed-loop critical path. Existing deterministic public configurator remains.
+
+Evidence and acceptance gates: [system reconciliation](SYSTEM_RECONCILIATION_2026-09-28.md).
+
 ## F0 — Foundation / Sprint 0
 Goal: create a boring, reliable engineering foundation.
 

@@ -56,4 +56,4 @@ Reliable business truth and domain rules come first. Automation is built on that
 
 ## Status
 
-Architecture / pre-implementation. The next engineering milestone is **Implementation Sprint 0**: repository bootstrap + one minimal authenticated vertical slice proving organization scoping, API, database migrations, audit/events, tests and CI.
+Sprints 0–9 are merged; the sales API includes accepted Quote → Order + Project. Production operator identity and the physical production/delivery/actual-cost loop are incomplete. See [current state](docs/PROJECT_STATE.md) and the [2026-09-28 system baseline](docs/SYSTEM_RECONCILIATION_2026-09-28.md). Deployment is not proof of a usable authenticated end-to-end journey.
