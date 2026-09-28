@@ -33,7 +33,7 @@
 
 ## Sprint 5b — extensible options (DD-026, migration `0006`)
 - `presentation` metadata on option definitions: group, hint, slider step, choice label/description/swatch
-- starter catalog v2: table gains thickness (3–10 cm), edge (straight/natural), finish (natural oil/smoked oil/unfinished); sideboard gains height (40–120 cm, **range is a proposal for owner review**) and finish. Existing option rows get presentation backfilled only where it is empty, so later catalog edits are not overwritten
+- starter catalog v2: table gains thickness (3–10 cm), edge (straight/natural), finish (natural oil/smoked oil/unfinished); sideboard gains height and finish. Sideboard ranges set on 2026-09-28 under owner authorisation: depth 30–60 cm, height 50–110 cm (editable catalog data; the table keeps depth 40–140 cm). Existing option rows get presentation backfilled only where it is empty, so later catalog edits are not overwritten
 - website renders options generically by group (NUMBER, ENUM with swatches/descriptions, BOOLEAN, TEXT)
 - drawing at true scale: top thickness, natural edge outline, finish tone, table height 75 cm, sideboard height
 - shareable/bookmarkable configuration link (`/kreator?projekt=…&width_cm=…`), re-validated against the catalog (invalid values ignored, numbers snapped to range/step)

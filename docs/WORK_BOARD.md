@@ -3,13 +3,13 @@
 Protocol: `docs/COORDINATION.md`. Update this file whenever you start, hand off or finish a lane.
 PRs on GitHub are the tie-breaker if this board is stale.
 
-_Last updated: 2026-09-27 (Sprint 5 claimed)_
+_Last updated: 2026-09-28_
 
 ## Active lanes
 
 | Lane | Owner | Branch | PR | Touches | Status |
 |---|---|---|---|---|---|
-| Sprint 5 / 5b — Public configurator v1 + extensible options (presentation metadata, new options, share link) | Claude (session `ht9hxm`) | `claude/avitus-msteria-project-ht9hxm` | #18 | `modules/acquisition`, `modules/catalog` (read), migrations 0005–0006, `packages/database` (schema, seed-dev, bootstrap-prod starter catalog), new `apps/api` public controller, `apps/api` composition root, `apps/web/src/app/kreator` + new components/route | In review |
+| Catalog: sideboard depth/height defaults | Claude (session `ht9hxm`) | `claude/avitus-msteria-project-ht9hxm` | — | `packages/database/src/starter-catalog.ts`, docs | In review |
 | Production deployment (Fly.io + home.pl DNS) | Human owner | — | — | GitHub secret `FLY_API_TOKEN` | Blocked: Fly returns `unauthorized` for the current token (run 25, 2026-09-27); owner must replace it with an org token covering both apps |
 
 ## Reservations
@@ -24,8 +24,8 @@ Take the next free value, write your lane next to it, commit together with your 
 | 0002 | Sprint 2 pricing/quotes | merged |
 | 0003 | Sprint 3 public inquiry | merged |
 | 0004 | Sprint 4 customer identity | merged |
-| **0005** | Sprint 5 public configuration requests | in review (#18) |
-| **0006** | Sprint 5b option presentation metadata | in review (#18) |
+| **0005** | Sprint 5 public configuration requests | merged |
+| **0006** | Sprint 5b option presentation metadata | merged |
 | 0007 | _next free_ | — |
 
 ### Decision IDs (`docs/DECISIONS.md`)
@@ -34,8 +34,8 @@ Take the next free value, write your lane next to it, commit together with your 
 | DD-022 | Production deployment platform (Fly.io) | merged |
 | DD-023 | Coordination protocol and shared-identifier reservations | merged |
 | DD-024 | Customer identity precedes Quote READY/SENT governance | merged |
-| **DD-025** | Public configurator requests: immutable intake snapshot, no auto-Opportunity, no public price | in review (#18) |
-| **DD-026** | Option presentation lives in the catalog, not in UI code | in review (#18) |
+| **DD-025** | Public configurator requests: immutable intake snapshot, no auto-Opportunity, no public price | merged |
+| **DD-026** | Option presentation lives in the catalog, not in UI code | merged |
 | DD-027 | _next free_ | — |
 
 ### Sprint numbers
@@ -46,7 +46,7 @@ Take the next free value, write your lane next to it, commit together with your 
 | 2 | Pricing + immutable draft quotes | merged |
 | 3 | Public website v0.1 + inquiry intake | merged |
 | 4 | Customer identity | merged |
-| **5** | Public configurator v1 (owner chose option A on 2026-09-27) | reserved |
+| 5 | Public configurator v1 + 5b | merged |
 | 6 | _next free_ (candidate: Quote governance) | — |
 
 ## Known collisions
@@ -82,4 +82,5 @@ Resolved by rebuilding the lane on current `main` in a new PR (owner approved au
 | Sprint 0–3, design refinement, Fly deployment helpers | #1–#4, #6–#10 | changes landed on `main` (PRs closed after direct integration) |
 | Coordination protocol + collision guard (DD-023) | #11 | landed on `main` |
 | Sprint 4 customer identity (replaced #5) | #17 | merged |
+| Sprint 5 / 5b public configurator + extensible options | #18 | merged 2026-09-28 |
 | API dual-stack bind (INC-001), production deploy gate, website v0.4, path-aware Fly deploy | #12–#16 | landed on `main` |
