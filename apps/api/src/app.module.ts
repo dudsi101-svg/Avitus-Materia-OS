@@ -50,6 +50,7 @@ import {
   ReviseQuoteService,
 } from '@avitus/quotes';
 import { CatalogController } from './catalog.controller';
+import { ConfigurationRequestIdentityService } from './configuration-request-identity.service';
 import { ConfigurationRequestsController } from './configuration-requests.controller';
 import { ConfigurationsController } from './configurations.controller';
 import { CrmController } from './crm.controller';
@@ -81,6 +82,16 @@ const identityRepository = new PostgresIdentityRepository(connection.db);
 const uow = new PostgresUnitOfWork(connection.db);
 const auditStore = new PostgresAuditStore(connection.db);
 const eventStore = new PostgresDomainEventStore(connection.db);
+const configurationRequestIdentityService = new ConfigurationRequestIdentityService(
+  configurationRequestRepository,
+  customerAccountRepository,
+  customerLinkRepository,
+  leadRepository,
+  opportunityRepository,
+  uow,
+  eventStore,
+  auditStore,
+);
 
 @Module({
   controllers: [
@@ -150,6 +161,7 @@ const eventStore = new PostgresDomainEventStore(connection.db);
         auditStore,
       ),
     },
+    { provide: TOKENS.configurationRequestIdentityService, useValue: configurationRequestIdentityService },
     {
       provide: TOKENS.createLeadService,
       useValue: new CreateLeadService(uow, leadRepository, eventStore, auditStore),

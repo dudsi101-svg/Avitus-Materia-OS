@@ -18,6 +18,7 @@ export const TOKENS = {
   readPublicCatalogService: Symbol('readPublicCatalogService'),
   readConfigurationRequestService: Symbol('readConfigurationRequestService'),
   convertConfigurationRequestService: Symbol('convertConfigurationRequestService'),
+  configurationRequestIdentityService: Symbol('configurationRequestIdentityService'),
   createLeadService: Symbol('createLeadService'),
   readLeadService: Symbol('readLeadService'),
   createOpportunityService: Symbol('createOpportunityService'),

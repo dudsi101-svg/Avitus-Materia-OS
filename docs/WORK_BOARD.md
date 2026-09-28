@@ -9,7 +9,7 @@ _Last updated: 2026-09-28_
 
 | Lane | Owner | Branch | PR | Touches | Status |
 |---|---|---|---|---|---|
-| Sprint 7 — customer identity handoff from converted configurator request | GPT/Writer | `writer/state-sync-sprint7-plan` | — | docs first; planned: `modules/acquisition`, `modules/customers`, `apps/api`, `apps/admin`, tests | Planning / claim established |
+| Sprint 7 — customer identity handoff from converted configurator request | GPT/Writer | `writer/sprint7-customer-identity-handoff` | — | `apps/api`, `apps/admin`, customer/acquisition contracts through existing repositories, tests, docs | Implementation in progress; no migration / no new DD |
 
 ## Reservations
 
@@ -49,7 +49,7 @@ Take the next free value, write your lane next to it, commit together with your 
 | 4 | Customer identity | merged |
 | 5 | Public configurator v1 + 5b | merged |
 | 6 | Configuration request → Opportunity + Configuration | merged |
-| **7** | Customer identity handoff from converted configurator request | **reserved / planning** |
+| **7** | Customer identity handoff from converted configurator request | **reserved / implementing** |
 | 8 | _next free_ (candidate: Quote governance) | — |
 
 ## Known collisions
