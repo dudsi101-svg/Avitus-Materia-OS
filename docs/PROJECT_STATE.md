@@ -120,7 +120,7 @@ Both were fixed before PR #4 was merged.
 ## Sprint 4 — merged customer identity
 `Person | Company -> CustomerAccount -> ContactPoint -> Lead / Opportunity` (PR #17, migration `0004`, DD-024).
 
-## Sprint 5 — public configurator v1 (in review)
+## Sprint 5 — public configurator v1 (merged, PR #18)
 Validated flow:
 
 `Catalog (CONFIGURABLE) -> /kreator (server-loaded, 5 min revalidation) -> Next route -> Public Configurator API -> PublicConfigurationRequest + Lead -> Audit + DomainEvents + Outbox`

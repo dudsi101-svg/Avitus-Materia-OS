@@ -112,8 +112,9 @@ const edge = enumOption('edge', 'Krawędź', 33, GROUP_WOOD, {
   PROSTA: { label: 'Prosta', description: 'Równo docięta krawędź.' },
   NATURALNA: { label: 'Naturalna', description: 'Zachowuje kształt pnia.' },
 });
-// Proposal for owner review: sideboard height range.
-const height = numberOption('height_cm', 'Wysokość', 22, [40, 120], 5);
+// Sideboard defaults (owner-authorised 2026-09-28): typical sideboard proportions; editable as catalog data.
+const cabinetDepth = numberOption('depth_cm', 'Głębokość', 20, [30, 60], 5);
+const height = numberOption('height_cm', 'Wysokość', 22, [50, 110], 5);
 
 export const STARTER_CATALOG = [
   {
@@ -132,7 +133,7 @@ export const STARTER_CATALOG = [
     name: 'Komoda / szafka',
     slug: 'komoda-szafka',
     description: 'Komoda lub szafka z litego drewna wykonywana na wymiar.',
-    options: [width, depth, height, material, finish, base],
+    options: [width, cabinetDepth, height, material, finish, base],
   },
 ] as const;
 
