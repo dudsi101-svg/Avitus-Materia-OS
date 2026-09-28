@@ -177,6 +177,17 @@ Tax is explicit input/policy (`tax_rate_bps`) and must not be silently inferred 
 
 Details: `docs/IMPLEMENTATION_SPRINT_8.md`.
 
+## DD-029 — Accepted QuoteVersion is the commercial source for Order; Project is separate execution
+**Status:** Accepted direction (Sprint 9)
+
+Customer acceptance is an explicit governed transition on a specific current QuoteVersion. Only that accepted immutable version may become the commercial source of an `Order`; Order totals, currency, configuration reference and buyer snapshot are copied/referenced from accepted commercial truth rather than recomputed from current mutable data.
+
+Quote-to-Order conversion is one-time and concurrency-safe. `Order` records the commercial commitment; `Project` is a separate operational aggregate linked to the Order and configuration, in accordance with DD-018. Creating operational work must not rewrite the accepted QuoteVersion.
+
+The first Project state is planning-oriented and does not contain an invented promised completion date. Customer-facing production/delivery promises require later BusinessCalendar/capacity truth.
+
+Details: `docs/IMPLEMENTATION_SPRINT_9.md`.
+
 ## Open decisions for Technical Architecture v0.4
 - Authentication provider
 - Object storage provider
