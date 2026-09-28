@@ -8,13 +8,13 @@ export default function HomePage() {
     <main className="shell">
       <header className="hero">
         <div>
-          <p className="eyebrow">Avitus Materia OS · Sprint 7</p>
+          <p className="eyebrow">Avitus Materia OS · Sprint 8</p>
           <h1>Command Center</h1>
           <p>
-            Commercial source of truth: Kreator → Lead → CustomerAccount → Opportunity → Configuration → Pricing → Draft Quote.
+            Commercial source of truth: Kreator → Lead → CustomerAccount → Opportunity → Configuration → Pricing → Governed Quote.
           </p>
         </div>
-        <span className="status">Tożsamość klienta</span>
+        <span className="status">Oferta handlowa</span>
       </header>
       <ConfigurationRequestConsole />
       <LeadConsole />

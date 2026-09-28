@@ -166,6 +166,17 @@ Customer-facing presentation of catalog options (group, hint, slider step, choic
 
 An operator converts a `PublicConfigurationRequest` into an Opportunity (on the request's Lead) plus Configuration v1 with the customer's exact values, re-validated against the current catalog. `crm` and `configurator` expose pure creation builders; acquisition persists their output through the modules' repositories in one Unit of Work with a conversion record whose primary key is the request id (one-time, concurrency-safe; conflicts return HTTP 409). The intake record remains immutable. Details: `docs/IMPLEMENTATION_SPRINT_6.md`.
 
+## DD-028 — QuoteVersion is the immutable customer-ready commercial snapshot
+**Status:** Accepted (Sprint 8)
+
+`CustomerAccount` is the mutable source of current customer truth, while each customer-ready `QuoteVersion` snapshots the buyer identity and commercial terms actually used for that version. The snapshot may contain the buyer display/legal identity and selected contact context needed for the commercial document, but append-only audit/domain-event payloads continue to carry identifiers and non-sensitive commercial summaries rather than buyer PII.
+
+Tax is explicit input/policy (`tax_rate_bps`) and must not be silently inferred as one universal VAT rate. Discounts are explicit, require a reason, and every non-zero discount in the first governance slice requires a human approval before the Quote can become `READY`. Commercial margin is recalculated from the actual post-discount net selling amount; tax is not counted as margin.
+
+`READY` is a deterministic business gate: the current configuration/pricing must still be current, the Opportunity must have an authoritative `CustomerAccount`, the current QuoteVersion must contain the matching buyer snapshot, validity and tax policy must be present, and any discount approval must be satisfied. `SENT` is a controlled transition only from `READY`, not a UI label. Customer-ready/sent versions are not mutated in place; later commercial changes require a new immutable version under the existing version-history rules.
+
+Details: `docs/IMPLEMENTATION_SPRINT_8.md`.
+
 ## Open decisions for Technical Architecture v0.4
 - Authentication provider
 - Object storage provider

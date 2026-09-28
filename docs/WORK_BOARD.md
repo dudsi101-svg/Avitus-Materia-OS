@@ -9,7 +9,7 @@ _Last updated: 2026-09-28_
 
 | Lane | Owner | Branch | PR | Touches | Status |
 |---|---|---|---|---|---|
-| Sprint 7 — customer identity handoff from converted configurator request | GPT/Writer | `writer/sprint7-customer-identity-handoff` | — | `apps/api`, `apps/admin`, customer/acquisition contracts through existing repositories, tests, docs | Implementation in progress; no migration / no new DD |
+| Sprint 8 — Quote governance | GPT/Writer | `writer/sprint8-quote-governance` | — | `modules/quotes`, `apps/api`, `apps/admin`, database migration, tests, docs | Claimed; migration `0008`, decision `DD-028` reserved |
 
 ## Reservations
 
@@ -26,7 +26,8 @@ Take the next free value, write your lane next to it, commit together with your 
 | 0005 | Sprint 5 public configuration requests | merged |
 | 0006 | Sprint 5b option presentation metadata | merged |
 | 0007 | Sprint 6 configuration request conversions | merged |
-| 0008 | _next free_ | — |
+| **0008** | **Sprint 8 Quote governance** | **reserved / implementing** |
+| 0009 | _next free_ | — |
 
 ### Decision IDs (`docs/DECISIONS.md`)
 | ID | Subject | State |
@@ -37,7 +38,8 @@ Take the next free value, write your lane next to it, commit together with your 
 | DD-025 | Public configurator requests: immutable intake snapshot, no auto-Opportunity, no public price | merged |
 | DD-026 | Option presentation lives in the catalog, not in UI code | merged |
 | DD-027 | Conversion of public configuration requests is explicit, atomic and one-time | merged |
-| DD-028 | _next free_ | — |
+| **DD-028** | **Quote governance: buyer snapshot, commercial policy and controlled state transitions** | **reserved / implementing** |
+| DD-029 | _next free_ | — |
 
 ### Sprint numbers
 | Sprint | Subject | State |
@@ -49,8 +51,9 @@ Take the next free value, write your lane next to it, commit together with your 
 | 4 | Customer identity | merged |
 | 5 | Public configurator v1 + 5b | merged |
 | 6 | Configuration request → Opportunity + Configuration | merged |
-| **7** | Customer identity handoff from converted configurator request | **reserved / implementing** |
-| 8 | _next free_ (candidate: Quote governance) | — |
+| 7 | Customer identity handoff from converted configurator request | merged (PR #26) |
+| **8** | **Quote governance** | **reserved / implementing** |
+| 9 | _next free_ (candidate: Order + Project) | — |
 
 ## Known collisions
 
@@ -78,4 +81,5 @@ Customer identity was rebuilt on current `main` and merged as PR #17 with both a
 | Deploy target detection per app | #20 | merged 2026-09-28 |
 | Sprint 6 configurator request conversion | #21 | merged 2026-09-28 |
 | Sprint 6 CI race fix | #22 | merged 2026-09-28; main deploy run 41 succeeded |
+| Sprint 7 customer identity handoff | #26 | merged 2026-09-28; API production deploy run 48 succeeded |
 | Production deploy unblocked (new Fly org token) | — | web + API deployment pipeline operational |

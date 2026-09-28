@@ -1,6 +1,6 @@
 # Next Action
 
-_Updated 2026-09-28. Sprints 0–6 are merged. Production deploy run 41 for the current `main` completed successfully. Live coordination state: `docs/WORK_BOARD.md`._
+_Updated 2026-09-28. Sprints 0–7 are merged. Production deploy run 48 for Sprint 7 completed successfully; API readiness verification passed. Live coordination state: `docs/WORK_BOARD.md`._
 
 ## For any agent starting a session
 Follow the session start checklist in `docs/COORDINATION.md` before coding.
@@ -10,15 +10,22 @@ Follow the session start checklist in `docs/COORDINATION.md` before coding.
 - `/kreator` is live and catalog-driven;
 - public configuration requests create an immutable intake snapshot + Lead;
 - Sprint 6 converts a request exactly once into Opportunity + Configuration v1 and hands it to pricing;
-- API production deployment after the Sprint 6 CI race fix succeeded and `/ready` verification passed in the deploy workflow;
-- there are no open pull requests at the time of this update.
+- Sprint 7 explicitly creates or selects a durable `CustomerAccount` and links the same account to both Lead and Opportunity;
+- Sprint 7 API changes deployed successfully in Fly production run 48 and `/ready` verification passed;
+- Draft Quote creation/revision already exists, but customer-ready governance is not implemented yet.
 
 ## Queue (in order)
-1. **Sprint 7 — customer identity handoff:** from a converted configurator request, create or explicitly select a `CustomerAccount`, then link the same account to both the source Lead and the created Opportunity. Avoid silent deduplication and preserve the immutable intake record.
-2. **Production smoke:** exercise the real browser journey end-to-end: public configurator submission → Command Center → conversion → customer link → pricing → Draft Quote. Record any production-only failure as an incident before adding features on top.
-3. **Quote governance:** VAT/tax policy, discounts/margin approvals, READY/SENT transitions and buyer snapshot. Do not make a Draft Quote customer-binding before these rules exist.
-4. **Operational truth before promises:** BusinessCalendar + capacity/availability estimates, then accepted Quote → Order / Project.
-5. **AI/visualization:** room-photo analysis and generated visualization only after the basic customer/configuration/quote journey and production observability are stable.
+1. **Sprint 8 — Quote governance:** consume the authoritative CustomerAccount from the Opportunity, snapshot buyer identity into the legally/business-significant QuoteVersion, add explicit tax/discount policy, recompute commercial margin after discount/tax inputs, and introduce controlled `DRAFT -> READY -> SENT` transitions.
+2. **Production journey smoke:** once a production-accessible operator surface exists, exercise public configurator submission → conversion → customer identity → pricing → governed Quote. Until then, keep the API/E2E journey as the release gate and record any production-only incident immediately.
+3. **Order + Project:** only an accepted governed Quote should become the commercial Order; operational execution remains a separate Project per DD-018.
+4. **Operational truth before promises:** BusinessCalendar + capacity/availability estimates before customer-visible delivery promises.
+5. **AI/visualization:** room-photo analysis and generated visualization after the customer/configuration/quote journey and production observability are stable.
 
-## Sprint 7 design constraint
-Reuse Sprint 4 customer identity and linking invariants. Prefer explicit operator action over automatic identity merging. Matching an email/phone may be used to suggest an existing customer, but must not silently merge two customers or overwrite contact data.
+## Sprint 8 design constraints
+- do not mutate historical buyer/commercial truth after a QuoteVersion becomes customer-ready;
+- CustomerAccount is the source of current customer truth, but QuoteVersion gets an immutable buyer snapshot;
+- tax must be explicit data/policy, not a hidden hard-coded assumption;
+- discounts must preserve reason, actor and resulting margin;
+- transition to READY must fail if buyer identity, commercial totals or validity data are incomplete;
+- SENT is a governed state change, not merely a UI label;
+- PII stays out of append-oriented domain event/audit payloads except identifiers and non-sensitive commercial summaries.

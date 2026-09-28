@@ -44,10 +44,13 @@ import {
   ReadPriceCalculationService,
 } from '@avitus/pricing';
 import {
+  ApproveQuoteDiscountService,
   CreateQuoteService,
   PostgresQuoteRepository,
   ReadQuoteService,
+  ReadyQuoteService,
   ReviseQuoteService,
+  SendQuoteService,
 } from '@avitus/quotes';
 import { CatalogController } from './catalog.controller';
 import { ConfigurationRequestIdentityService } from './configuration-request-identity.service';
@@ -60,6 +63,7 @@ import { OpportunitiesController } from './opportunities.controller';
 import { PricingController } from './pricing.controller';
 import { PublicConfiguratorController } from './public-configurator.controller';
 import { PublicInquiriesController } from './public-inquiries.controller';
+import { QuoteGovernanceService } from './quote-governance.service';
 import { QuotesController } from './quotes.controller';
 import { CorrelationMiddleware, DevelopmentAuthGuard } from './request-context';
 import { HttpErrorFilter } from './http-error.filter';
@@ -92,6 +96,45 @@ const configurationRequestIdentityService = new ConfigurationRequestIdentityServ
   eventStore,
   auditStore,
 );
+const createQuoteService = new CreateQuoteService(
+  uow,
+  opportunityRepository,
+  configurationRepository,
+  productRepository,
+  priceCalculationRepository,
+  quoteRepository,
+  eventStore,
+  auditStore,
+);
+const reviseQuoteService = new ReviseQuoteService(
+  uow,
+  configurationRepository,
+  productRepository,
+  priceCalculationRepository,
+  quoteRepository,
+  eventStore,
+  auditStore,
+);
+const approveQuoteDiscountService = new ApproveQuoteDiscountService(uow, quoteRepository, eventStore, auditStore);
+const readyQuoteService = new ReadyQuoteService(
+  uow,
+  configurationRepository,
+  priceCalculationRepository,
+  quoteRepository,
+  eventStore,
+  auditStore,
+);
+const sendQuoteService = new SendQuoteService(uow, quoteRepository, eventStore, auditStore);
+const quoteGovernanceService = new QuoteGovernanceService(
+  customerAccountRepository,
+  customerLinkRepository,
+  quoteRepository,
+  createQuoteService,
+  reviseQuoteService,
+  approveQuoteDiscountService,
+  readyQuoteService,
+  sendQuoteService,
+);
 
 @Module({
   controllers: [
@@ -123,13 +166,7 @@ const configurationRequestIdentityService = new ConfigurationRequestIdentityServ
     { provide: TOKENS.customerLinkRepository, useValue: customerLinkRepository },
     {
       provide: TOKENS.createPublicInquiryService,
-      useValue: new CreatePublicInquiryService(
-        uow,
-        leadRepository,
-        publicInquiryRepository,
-        eventStore,
-        auditStore,
-      ),
+      useValue: new CreatePublicInquiryService(uow, leadRepository, publicInquiryRepository, eventStore, auditStore),
     },
     { provide: TOKENS.publicConfigurationRequestRepository, useValue: publicConfigurationRequestRepository },
     {
@@ -144,10 +181,7 @@ const configurationRequestIdentityService = new ConfigurationRequestIdentityServ
       ),
     },
     { provide: TOKENS.readPublicCatalogService, useValue: new ReadPublicCatalogService(productRepository) },
-    {
-      provide: TOKENS.readConfigurationRequestService,
-      useValue: new ReadConfigurationRequestService(configurationRequestRepository),
-    },
+    { provide: TOKENS.readConfigurationRequestService, useValue: new ReadConfigurationRequestService(configurationRequestRepository) },
     {
       provide: TOKENS.convertConfigurationRequestService,
       useValue: new ConvertConfigurationRequestService(
@@ -162,33 +196,15 @@ const configurationRequestIdentityService = new ConfigurationRequestIdentityServ
       ),
     },
     { provide: TOKENS.configurationRequestIdentityService, useValue: configurationRequestIdentityService },
-    {
-      provide: TOKENS.createLeadService,
-      useValue: new CreateLeadService(uow, leadRepository, eventStore, auditStore),
-    },
+    { provide: TOKENS.createLeadService, useValue: new CreateLeadService(uow, leadRepository, eventStore, auditStore) },
     { provide: TOKENS.readLeadService, useValue: new ReadLeadService(leadRepository) },
     {
       provide: TOKENS.createOpportunityService,
-      useValue: new CreateOpportunityService(
-        uow,
-        leadRepository,
-        opportunityRepository,
-        eventStore,
-        auditStore,
-      ),
+      useValue: new CreateOpportunityService(uow, leadRepository, opportunityRepository, eventStore, auditStore),
     },
-    {
-      provide: TOKENS.readOpportunityService,
-      useValue: new ReadOpportunityService(opportunityRepository),
-    },
-    {
-      provide: TOKENS.createPersonCustomerService,
-      useValue: new CreatePersonCustomerService(uow, customerAccountRepository, eventStore, auditStore),
-    },
-    {
-      provide: TOKENS.createCompanyCustomerService,
-      useValue: new CreateCompanyCustomerService(uow, customerAccountRepository, eventStore, auditStore),
-    },
+    { provide: TOKENS.readOpportunityService, useValue: new ReadOpportunityService(opportunityRepository) },
+    { provide: TOKENS.createPersonCustomerService, useValue: new CreatePersonCustomerService(uow, customerAccountRepository, eventStore, auditStore) },
+    { provide: TOKENS.createCompanyCustomerService, useValue: new CreateCompanyCustomerService(uow, customerAccountRepository, eventStore, auditStore) },
     { provide: TOKENS.readCustomerService, useValue: new ReadCustomerService(customerAccountRepository) },
     {
       provide: TOKENS.linkCustomerService,
@@ -202,76 +218,29 @@ const configurationRequestIdentityService = new ConfigurationRequestIdentityServ
         auditStore,
       ),
     },
-    {
-      provide: TOKENS.customerContextService,
-      useValue: new CustomerContextService(customerAccountRepository, customerLinkRepository),
-    },
+    { provide: TOKENS.customerContextService, useValue: new CustomerContextService(customerAccountRepository, customerLinkRepository) },
     { provide: TOKENS.readCatalogService, useValue: new ReadCatalogService(productRepository) },
     {
       provide: TOKENS.createConfigurationService,
-      useValue: new CreateConfigurationService(
-        uow,
-        opportunityRepository,
-        productRepository,
-        configurationRepository,
-        eventStore,
-        auditStore,
-      ),
+      useValue: new CreateConfigurationService(uow, opportunityRepository, productRepository, configurationRepository, eventStore, auditStore),
     },
     {
       provide: TOKENS.reviseConfigurationService,
-      useValue: new ReviseConfigurationService(
-        uow,
-        productRepository,
-        configurationRepository,
-        eventStore,
-        auditStore,
-      ),
+      useValue: new ReviseConfigurationService(uow, productRepository, configurationRepository, eventStore, auditStore),
     },
-    {
-      provide: TOKENS.readConfigurationService,
-      useValue: new ReadConfigurationService(configurationRepository),
-    },
+    { provide: TOKENS.readConfigurationService, useValue: new ReadConfigurationService(configurationRepository) },
     {
       provide: TOKENS.createPriceCalculationService,
-      useValue: new CreatePriceCalculationService(
-        uow,
-        configurationRepository,
-        priceCalculationRepository,
-        eventStore,
-        auditStore,
-      ),
+      useValue: new CreatePriceCalculationService(uow, configurationRepository, priceCalculationRepository, eventStore, auditStore),
     },
-    {
-      provide: TOKENS.readPriceCalculationService,
-      useValue: new ReadPriceCalculationService(priceCalculationRepository),
-    },
-    {
-      provide: TOKENS.createQuoteService,
-      useValue: new CreateQuoteService(
-        uow,
-        opportunityRepository,
-        configurationRepository,
-        productRepository,
-        priceCalculationRepository,
-        quoteRepository,
-        eventStore,
-        auditStore,
-      ),
-    },
-    {
-      provide: TOKENS.reviseQuoteService,
-      useValue: new ReviseQuoteService(
-        uow,
-        configurationRepository,
-        productRepository,
-        priceCalculationRepository,
-        quoteRepository,
-        eventStore,
-        auditStore,
-      ),
-    },
+    { provide: TOKENS.readPriceCalculationService, useValue: new ReadPriceCalculationService(priceCalculationRepository) },
+    { provide: TOKENS.createQuoteService, useValue: createQuoteService },
+    { provide: TOKENS.reviseQuoteService, useValue: reviseQuoteService },
     { provide: TOKENS.readQuoteService, useValue: new ReadQuoteService(quoteRepository) },
+    { provide: TOKENS.approveQuoteDiscountService, useValue: approveQuoteDiscountService },
+    { provide: TOKENS.readyQuoteService, useValue: readyQuoteService },
+    { provide: TOKENS.sendQuoteService, useValue: sendQuoteService },
+    { provide: TOKENS.quoteGovernanceService, useValue: quoteGovernanceService },
     { provide: APP_GUARD, useClass: DevelopmentAuthGuard },
     { provide: APP_FILTER, useClass: HttpErrorFilter },
   ],
