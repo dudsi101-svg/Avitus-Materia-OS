@@ -9,7 +9,7 @@ _Last updated: 2026-09-28_
 
 | Lane | Owner | Branch | PR | Touches | Status |
 |---|---|---|---|---|---|
-| Sprint 9 — Accepted Quote → Order + Project | GPT/Writer | `writer/post-sprint8-state-sprint9-plan` | — | `orders`, `projects`, `quotes`, `apps/api`, `apps/admin`, database migration, tests, docs | Claimed; migration `0009`, decision `DD-029` reserved |
+| System reconciliation + safe API error logging | Codex | `codex/system-reconciliation-hardening` | pending | API error filter/tests; audit and state documentation | Claimed; no migration, DD or sprint number required |
 
 ## Reservations
 
@@ -27,7 +27,7 @@ Take the next free value, write your lane next to it, commit together with your 
 | 0006 | Sprint 5b option presentation metadata | merged |
 | 0007 | Sprint 6 configuration request conversions | merged |
 | 0008 | Sprint 8 Quote governance | merged (PR #27) |
-| **0009** | **Sprint 9 Accepted Quote → Order + Project** | **reserved / implementing** |
+| **0009** | **Sprint 9 Accepted Quote → Order + Project** | **merged (PR #28); deployed API run 78** |
 | 0010 | _next free_ | — |
 
 ### Decision IDs (`docs/DECISIONS.md`)
@@ -40,7 +40,7 @@ Take the next free value, write your lane next to it, commit together with your 
 | DD-026 | Option presentation lives in the catalog, not in UI code | merged |
 | DD-027 | Conversion of public configuration requests is explicit, atomic and one-time | merged |
 | DD-028 | QuoteVersion is the immutable customer-ready commercial snapshot | merged |
-| **DD-029** | **Accepted QuoteVersion is the commercial source for Order; Project is separate execution** | **reserved / implementing** |
+| **DD-029** | **Accepted QuoteVersion is the commercial source for Order; Project is separate execution** | **merged (PR #28); deployed API run 78** |
 | DD-030 | _next free_ | — |
 
 ### Sprint numbers
@@ -55,7 +55,7 @@ Take the next free value, write your lane next to it, commit together with your 
 | 6 | Configuration request → Opportunity + Configuration | merged |
 | 7 | Customer identity handoff from converted configurator request | merged (PR #26) |
 | 8 | Quote governance | merged (PR #27); production deploy run 55 succeeded |
-| **9** | **Accepted Quote → Order + Project** | **reserved / implementing** |
+| **9** | **Accepted Quote → Order + Project** | **merged (PR #28); deployed API run 78** |
 | 10 | _next free_ | — |
 
 ## Known collisions
@@ -87,3 +87,6 @@ Customer identity was rebuilt on current `main` and merged as PR #17 with both a
 | Sprint 7 customer identity handoff | #26 | merged 2026-09-28; API production deploy run 48 succeeded |
 | Sprint 8 Quote governance | #27 | merged 2026-09-28; main CI #113 and Fly production deploy run 55 succeeded |
 | Production deploy unblocked (new Fly org token) | — | web + API deployment pipeline operational |
+
+## Reconciliation evidence (2026-09-28)
+Sprint 9 merged as PR #28 at `68ea544`; CI run 36449482063 succeeded; API deploy run 36449743352 succeeded. No open PRs at claim time. Sprint 9 UI and production operator authentication remain missing; deployment does not prove a usable authenticated journey.
