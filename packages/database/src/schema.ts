@@ -1,6 +1,7 @@
 import {
   boolean,
   date,
+  foreignKey,
   index,
   integer,
   jsonb,
@@ -65,7 +66,7 @@ export const roles = pgTable('roles', {
   code: varchar('code', { length: 120 }).notNull(),
   name: varchar('name', { length: 160 }).notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-});
+}, (table) => [uniqueIndex('roles_id_org_uidx').on(table.id, table.organizationId)]);
 
 export const permissions = pgTable('permissions', {
   id: uuid('id').primaryKey(),
@@ -85,7 +86,14 @@ export const organizationUsers = pgTable('organization_users', {
   roleId: uuid('role_id').notNull().references(() => roles.id),
   status: membershipStatus('status').notNull().default('ACTIVE'),
   joinedAt: timestamp('joined_at', { withTimezone: true }).notNull().defaultNow(),
-}, (table) => [uniqueIndex('organization_users_org_user_uidx').on(table.organizationId, table.userId)]);
+}, (table) => [
+  uniqueIndex('organization_users_org_user_uidx').on(table.organizationId, table.userId),
+  foreignKey({
+    name: 'organization_users_role_tenant_fk',
+    columns: [table.roleId, table.organizationId],
+    foreignColumns: [roles.id, roles.organizationId],
+  }).onUpdate('no action').onDelete('no action'),
+]);
 
 export const leads = pgTable('leads', {
   id: uuid('id').primaryKey(),

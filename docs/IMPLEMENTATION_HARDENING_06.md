@@ -9,3 +9,6 @@ Only allowlisted connection/availability failures or the exact driver connection
 Tests cover wrapped transport recovery, exact retry ceiling/backoff, privacy of output, no retry of constraints/permissions/protocol/deadlock and validation failures. No database/schema/authentication changes. No automatic customer replay or generic deployment retry. Remaining risk: three transient failures still abort release; this is controlled recovery, not a diagnosis of the underlying provider fault. Existing bootstrap query completion/connection-close behavior remains unchanged.
 
 Acceptance: local helper tests/typecheck; full CI; release logs show successful bootstrap and readiness; IAM PR34 then verified deployed. Update Hardening 05 and PROJECT_STATE with the actual result.
+
+## Deployment verified
+Main CI 36568275366 and API deployment 36568473095 succeeded. deployed-api points to 56440aa36f4602fa4eed8fb31b1f99ac0f7ea0c9. Readiness passed; role-integrity preflight reported 0 invalid memberships. This supersedes the earlier blocked rollout. Successful Fly logs do not expose the number of bootstrap attempts; retry behavior is proven by tests, not claimed as a live forced failure.

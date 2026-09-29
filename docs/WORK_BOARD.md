@@ -9,9 +9,7 @@ _Last updated: 2026-09-29_
 
 | Lane | Owner | Branch | PR | Touches | Status |
 |---|---|---|---|---|---|
-| Tenant membership authorization | Codex | `codex/tenant-role-integrity` | #34 | IAM repository/tests, read-only preflight, docs | Merged; seven PostgreSQL tests and full PR CI passed; API release blocked by recurring bootstrap connection termination; preflight invalid_memberships=0 |
-
-| Bootstrap transient recovery | Codex | `codex/bootstrap-retry` | pending | database bootstrap helper/tests, release evidence docs | Claimed; bounded retries of existing idempotent bootstrap, no migration |
+| Tenant role database invariant | Codex | `codex/tenant-role-constraint` | pending | migration 0011, schema, IAM/DB tests, docs | Claimed 2026-09-29; production preflight invalid_memberships=0 |
 
 ## Reservations
 
@@ -31,7 +29,8 @@ Take the next free value, write your lane next to it, commit together with your 
 | 0008 | Sprint 8 Quote governance | merged (PR #27) |
 | **0009** | **Sprint 9 Accepted Quote → Order + Project** | **merged (PR #28); deployed API run 78** |
 | 0010 | Public intake durable budget | merged (PR #30); applied in production, API release 36565136322 |
-| 0011 | _next free_ | — |
+| 0011 | Tenant role database invariant | reserved |
+| 0012 | _next free_ | — |
 
 ### Decision IDs (`docs/DECISIONS.md`)
 | ID | Subject | State |
@@ -100,3 +99,5 @@ PR #29 merged at `d43bb53`; PR CI 36464939159, main CI 36465241308 and API deplo
 
 ## 2026-09-29 hardening release checkpoint
 PR30 intake budget: deployed API d3a8de6 and web 04f697d; migration 0010 applied; full CI passed. PR31 privileged deployment provenance protection active. PR32/33 bounded read-only database diagnostics verified in production. Release 36565136322 succeeded after earlier bootstrap connection failures; root cause remains unproven. See Hardening 02–04. Gate 1 remains open; next P0 is tenant invariants plus recovery/alert proof.
+
+PR34/35 release verification: main CI 36568275366 and API deployment 36568473095 succeeded. API tag 56440aa, preflight invalid_memberships=0. Authorization hardening and bounded bootstrap retry are deployed. Bootstrap retry count was not exposed by successful release logs; do not claim that retries were exercised in production.

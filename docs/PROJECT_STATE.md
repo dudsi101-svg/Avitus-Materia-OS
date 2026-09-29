@@ -58,3 +58,6 @@ PR31 deployment provenance protection is active on main. The rate-budget 429 beh
 
 ## Hardening 05 in progress
 R05: single-statement active tenant/user/membership authorization with matching role scope, seven PostgreSQL integration cases, and a privacy-safe production integrity count. No migration or IdP change. Local checks passed; CI/release proof pending. See IMPLEMENTATION_HARDENING_05.md.
+
+## Verified IAM slice and next database invariant
+PR34/35 are API-deployed at 56440aa; main CI 36568275366 and release 36568473095 passed. Production readiness 200 and unauthenticated /leads 401 verified again. Role-integrity preflight found zero invalid memberships. Hardening 07 reserves migration 0011 to enforce matching role/membership tenants in PostgreSQL; tests/release pending. R05 remains partial across the wider domain model.
