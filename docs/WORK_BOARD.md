@@ -9,7 +9,7 @@ _Last updated: 2026-09-29_
 
 | Lane | Owner | Branch | PR | Touches | Status |
 |---|---|---|---|---|---|
-| — | — | — | — | — | No active implementation claim; Hardening 07 release verified |
+| Configurator runtime diagnosis | Codex | `codex/configurator-runtime-diagnosis` | pending | read-only capability probe, deployment workflow/tests, docs | Claimed 2026-09-29; no schema/data/credential change |
 
 ## Reservations
 
