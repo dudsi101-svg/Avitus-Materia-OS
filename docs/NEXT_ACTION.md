@@ -25,3 +25,5 @@ Hardening 02: PR30 merged, migration 0010 / DD-030; real PostgreSQL concurrency 
 Release recovered: run 36565136322 deployed API d3a8de6 after successful read-only diagnostics. PR30 budget is deployed; migration 0010 applied. Original connection failure cause remains unproven (R19). Next safe P0 slice: tenant role/FK preflight and negative tests (R05), alongside obtaining actual recovery/alert evidence. Do not reset the database or invent a cause for the transient release failures. Keep deployment target coverage R13 and configurator observability R17 visible. Do not claim Gate 1 complete or move to autonomous pricing/capacity.
 
 Active lane: Hardening 05 tenant membership authorization. Finish PostgreSQL CI, deploy and inspect invalid_memberships count before proposing a constraint migration. Do not infer global role semantics from nullable organization_id.
+
+Active: Hardening 07 migration 0011, composite role/membership tenant invariant. Require clean-load and legacy-data rollback proof in CI before deployment. PR34/35 are now deployed; do not repeat their implementation.

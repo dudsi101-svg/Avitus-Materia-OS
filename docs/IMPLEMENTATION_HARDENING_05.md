@@ -24,3 +24,6 @@ Production auth remains external/fail-closed; this does not implement an IdP or 
 PR #34 merged as 5952d05b36d00e3a2cc836d5ecbbf38ad3488004. PR CI 36566764163 passed migrations/seed/lint/typecheck/tests/build. All seven IAM integration tests executed against PostgreSQL and passed (711 ms); no local database run is claimed. Main CI and production release evidence pending.
 
 Main CI 36567038451 passed. Deployment 36567266889 preflight reported invalid_memberships=0, but API release failed in the existing bootstrap with connection termination; IAM code is not yet deployed. No migration was attempted. Stabilize bootstrap before marking this slice DEPLOYED.
+
+## Deployment verified
+Main CI 36568275366 and API deployment 36568473095 succeeded. deployed-api points to 56440aa36f4602fa4eed8fb31b1f99ac0f7ea0c9. Readiness passed; role-integrity preflight reported 0 invalid memberships. This supersedes the earlier blocked rollout. Successful Fly logs do not expose the number of bootstrap attempts; retry behavior is proven by tests, not claimed as a live forced failure.

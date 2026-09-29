@@ -33,13 +33,28 @@ suite('tenant membership authorization', () => {
     expect(await repository.authorizeMembership(user, other)).toBeNull();
     expect(await repository.authorizeMembership(randomUUID(), org)).toBeNull();
   });
-  it('denies a foreign tenant role even though the legacy FK permits it', async () => {
-    await pool.query('UPDATE organization_users SET role_id=$1 WHERE id=$2', [foreignRole, member]);
-    expect(await repository.authorizeMembership(user, org)).toBeNull();
+  it('rejects a foreign-tenant role at the database boundary', async () => {
+    await expect(pool.query('UPDATE organization_users SET role_id=$1 WHERE id=$2', [foreignRole, member]))
+      .rejects.toMatchObject({ code: '23503', constraint: 'organization_users_role_tenant_fk' });
+    expect(await repository.authorizeMembership(user, org)).not.toBeNull();
   });
-  it('does not turn an unscoped role into an implicit global grant', async () => {
+  it('rejects assigning an unscoped role', async () => {
+    await expect(pool.query('UPDATE organization_users SET role_id=$1 WHERE id=$2', [globalRole, member]))
+      .rejects.toMatchObject({ code: '23503', constraint: 'organization_users_role_tenant_fk' });
+  });
+  it('rejects cross-tenant inserts, membership moves and role reparenting', async () => {
+    await expect(pool.query('INSERT INTO organization_users(id,organization_id,user_id,role_id) VALUES($1,$2,$3,$4)', [randomUUID(), other, user, role]))
+      .rejects.toMatchObject({ code: '23503', constraint: 'organization_users_role_tenant_fk' });
+    await expect(pool.query('UPDATE organization_users SET organization_id=$1 WHERE id=$2', [other, member]))
+      .rejects.toMatchObject({ code: '23503', constraint: 'organization_users_role_tenant_fk' });
+    await expect(pool.query('UPDATE roles SET organization_id=$1 WHERE id=$2', [other, role]))
+      .rejects.toMatchObject({ code: '23503', constraint: 'organization_users_role_tenant_fk' });
+    expect(await repository.authorizeMembership(user, org)).not.toBeNull();
+  });
+  it('allows a role assignment once the unassigned role is scoped to the same tenant', async () => {
+    await pool.query('UPDATE roles SET organization_id=$1 WHERE id=$2', [org, globalRole]);
     await pool.query('UPDATE organization_users SET role_id=$1 WHERE id=$2', [globalRole, member]);
-    expect(await repository.authorizeMembership(user, org)).toBeNull();
+    expect((await repository.authorizeMembership(user, org))?.permissions.has(`iam.test.${permission}`)).toBe(true);
   });
   it('preserves an active membership with no permissions', async () => {
     await pool.query('DELETE FROM role_permissions WHERE role_id=$1', [role]);
