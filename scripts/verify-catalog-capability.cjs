@@ -3,7 +3,7 @@ async function verifyCatalog(env, fetcher, emit) {
   let originAllowed = false;
   try {
     const url = new URL(env.AVITUS_API_URL);
-    originAllowed = ['https://avitus-materia-api.fly.dev', 'https://api.avitus-materia.com'].includes(url.origin)
+    originAllowed = ['https://avitus-materia-api.fly.dev', 'https://api.avitus-materia.com', 'http://avitus-materia-api.internal:4000'].includes(url.origin)
       && url.pathname === '/' && !url.username && !url.password && !url.search && !url.hash;
   } catch {}
   emit({ event: 'catalog.config', api_url_present: Boolean(env.AVITUS_API_URL), api_key_present: Boolean(env.PUBLIC_INQUIRY_API_KEY), origin_allowed: originAllowed });

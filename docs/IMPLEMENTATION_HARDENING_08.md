@@ -6,4 +6,6 @@ Add a GET-only capability probe on the existing web machine via the trusted Fly 
 
 HTTP 200 with demo is now a failed capability check. This can mark the workflow failed even when application deployment/health succeeded; per-app tags record deployed code, not proof of the whole customer journey. API/security rollouts execute before this check, so existing configurator failure does not prevent their application deployment. It is not a full inquiry E2E or alert destination configuration.
 
-Six local tests cover config/destination boundary, upstream rejection, empty catalog, catalog + rendered form, silent demo and private network-error handling. Ten deployment provenance cases still pass. No source data, runtime credentials or application behavior changes in this diagnostic slice. Obtain live facts before implementing the repair.
+Seven local tests cover config/destination boundary, upstream rejection, empty catalog, catalog + rendered form, silent demo and private network-error handling. Ten deployment provenance cases still pass. No source data, runtime credentials or application behavior changes in this diagnostic slice. Obtain live facts before implementing the repair.
+
+Allowed API origins include the documented private Fly address http://avitus-materia-api.internal:4000 (DEPLOYMENT_V0.1), the API fly.dev origin and the public api.avitus-materia.com origin. This prevents treating the existing documented private network route as an invalid destination.

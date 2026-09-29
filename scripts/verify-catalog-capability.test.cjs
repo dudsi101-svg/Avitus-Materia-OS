@@ -38,3 +38,14 @@ test('network errors never log raw exception details', async () => {
   assert.deepEqual(records.at(-1), { event: 'catalog.failure', stage: 'upstream' });
   assert.doesNotMatch(JSON.stringify(records), /private-key|customer@/);
 });
+
+test('documented private Fly API origin is explicitly allowed', async () => {
+  let calls = 0;
+  const input = { ...env, AVITUS_API_URL: 'http://avitus-materia-api.internal:4000' };
+  await verifyCatalog(input, async (url, options) => {
+    calls++; assert.equal(String(url), input.AVITUS_API_URL + '/public/configurator/products');
+    assert.equal(options.headers['x-avitus-public-inquiry-key'], env.PUBLIC_INQUIRY_API_KEY);
+    return { ...upstream, json: async () => ({ products: [] }) };
+  }, () => {});
+  assert.equal(calls, 1);
+});
