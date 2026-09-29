@@ -12,7 +12,7 @@ _Last updated: 2026-09-29_
 | Public intake durable budget + proxy failure handling | Codex | `codex/public-intake-budget` | #30 | database 0010, config, API controllers/composition/filter, web proxies, tests, docs | BLOCKED: migration applied; API bootstrap connection fails in two release runs |
 | Deployment trust boundary | Codex | `codex/deployment-trust-boundary` | #31 | CI/deploy workflows, regression guard, docs | Merged; main CI passed; trusted push admitted; PR30 API retry failed independently |
 
-| Read-only production database diagnostics | Codex | `codex/database-release-diagnostics` | pending | dedicated trusted-push workflow, bounded diagnostic script/tests, docs | Claimed 2026-09-29; no migration, writes or schema changes |
+| Read-only production database diagnostics | Codex | `codex/database-preflight-compatibility` | #32 + follow-up | trusted deployment preflight, bounded diagnostic script/tests, docs | PR32 merged; preflight hit startup protocol error; correcting timeout compatibility before retry |
 
 ## Reservations
 

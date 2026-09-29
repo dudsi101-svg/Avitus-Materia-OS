@@ -16,13 +16,16 @@ async function diagnose(Pool, env, emit) {
     emit({ event: 'db.diagnostic', stage: 'config', ok: false });
     return false;
   }
-  const pool = new Pool({ connectionString: env.DATABASE_URL, max: 1, connectionTimeoutMillis: 5000, query_timeout: 7000, statement_timeout: 5000, application_name: 'avitus_readonly_diagnostic' });
+  const pool = new Pool({ connectionString: env.DATABASE_URL, max: 1, connectionTimeoutMillis: 5000, query_timeout: 7000, application_name: 'avitus_readonly_diagnostic' });
   pool.on('error', () => {});
   let client;
   let stage = 'connect';
   try {
     client = await pool.connect();
+    stage = 'transaction';
     await client.query('BEGIN READ ONLY');
+    stage = 'limits';
+    await client.query("SET LOCAL statement_timeout = '5s'");
     for (const [name, sql, params] of checks) {
       stage = name;
       const started = Date.now();
