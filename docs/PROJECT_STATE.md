@@ -1,8 +1,8 @@
 # Avitus Materia OS — Project State
 
-**Checkpoint:** System reconciliation after Sprint 9
-**Date:** 2026-09-28
-**Verified baseline main:** `68ea54441881c978eb6f18e8d4ae354689c1bf55`
+**Checkpoint:** System reconciliation + production hardening
+**Date:** 2026-09-29
+**Original audit baseline:** `68ea54441881c978eb6f18e8d4ae354689c1bf55`; release evidence below supersedes original hardening gaps.
 **Verdict:** deployed sales foundation; operational v1 is not complete.
 
 ## Evidence
@@ -24,7 +24,7 @@ Sprint 9: explicit acceptance of a SENT QuoteVersion; separate quote_acceptances
 - Production internal auth fails closed; admin still sends development headers. No production authenticated operator journey.
 - Sprint 9 admin controls, OrderItems/payment/delivery data and full lifecycle are absent.
 - Project has no tasks, approvals, drawings/change requests or execution UI yet.
-- Public intake has no verified rate budget/idempotency; proxies lack explicit timeout/error handling.
+- Public intake has a tested durable organization budget and proxy timeouts (PR30); per-client/edge controls, request-size bounds and idempotency remain open.
 - Tenant isolation is application-heavy; composite FKs are inconsistent and role-to-organization integrity needs hardening.
 - Backup restore, external alerting and secret configuration were not accessible for verification.
 - Quote SENT is not evidence of actual document/email delivery. Customer acceptance evidence flow is incomplete.
@@ -44,9 +44,12 @@ PR #29 merged as `d43bb53`; full main CI 36465241308 passed; API deployment 3646
 
 DATA TRUTH -> AUTOMATION -> INTELLIGENCE remains the governing principle. GitHub is durable memory; WORK_BOARD tracks active lanes.
 
-## Hardening 02 — in progress (2026-09-29)
-Claimed `codex/public-intake-budget`, migration 0010 / DD-030. Shared PostgreSQL intake budget + safe 429/503 and web timeout handling. Local API/web/config tests and typechecks passed; database concurrency proof and deployment remain pending. R02 remains PARTIAL until broader ingress controls are verified. Production ConfiguratorLite fallback was observed again Sep 29; no intake success is claimed.
+## Hardening 02 — release verification (2026-09-29)
+PR #30 merged at `04f697d`, migration 0010 / DD-030. Shared PostgreSQL intake budget + safe 429/503 and web timeout handling. PR CI 36533118415 and main CI 36533385390 passed, including real PostgreSQL concurrency proof (7 of 40 attempts admitted), all tests and build. R02 remains PARTIAL until broader ingress controls are verified. Production ConfiguratorLite fallback was observed again Sep 29; no intake success is claimed.
 
 ### 2026-09-29 — deployment provenance hardening
 
-R18 P0 found in workflow_run job predicate: branch name plus CI success did not distinguish PRs from trusted pushes. Hardening 03 adds event and repository checks before the privileged job starts, with ten regression scenarios. Locally tested; CI/merge verification pending. See `IMPLEMENTATION_HARDENING_03.md`.
+R18 P0 found in workflow_run job predicate: branch name plus CI success did not distinguish PRs from trusted pushes. Hardening 03 adds event and repository checks before the privileged job starts, with ten regression scenarios. PR #31 merged at `7f94a65`; full PR CI 36533882562 passed. Main CI 36534116244 passed; workflow 36534332017 admitted the trusted main push. Untrusted cases remain verified by the predicate regression, not a live exploit. See `IMPLEMENTATION_HARDENING_03.md`.
+
+## Current release truth — 2026-09-29
+Main 7f94a65; web tag 04f697d; API tag d43bb53. PR30 migration 0010 applied, but both API release attempts (36533542370, 36534332017) failed during existing organization bootstrap: connection terminated unexpectedly. API budget activation is BLOCKED; existing API readiness 200. PR31 deployment provenance protection is active on main. Investigate database connectivity/locks with bounded, non-PII diagnostics before another release.

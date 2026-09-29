@@ -30,11 +30,19 @@ The production configurator remains a demo fallback at the start of this work. T
 ## Validation state
 - Local: 3 HTTP budget tests + 3 existing logging tests passed; 5 web proxy/route tests passed; 4 config tests passed.
 - Local config/database compilation and API/web typechecks passed; boundary/coordination checks passed.
-- Real PostgreSQL integration tests: implemented, awaiting repository CI (no local PostgreSQL).
-- Full CI, merge, migration, deployment and production smoke: pending. Not DONE.
+- Real PostgreSQL integration tests: all 3 passed in PR CI 36533118415 and main CI 36533385390 (no local PostgreSQL). API 26 tests and web 8 tests passed.
+- PR #30 merged at `04f697dff345e7dcdd9ef025c676f385c0c83803`; both CI runs passed migration, seed, lint, typecheck, tests and build. Deployment evidence follows.
 
 ## Deployment / rollback
 Existing pipeline deploys web before API. Web remains compatible with old successful API acknowledgements; it simply handles future 429s. API release runs migration before starting new code. Do not drop the budget table during rollout or rollback. To revert, revert application changes; extra counter table is harmless. Tune the budget through validated configuration only; do not disable authentication or bypass the gate on store failure.
 
 ## Remaining gate work
 Edge/per-client abuse limits and request-size controls; monitoring/alert/restore proof; dependency updates; production identity/tenant constraints; real catalog-backed frontend verification. Gate 1 remains open.
+
+## Release incident — first attempt
+Run 36533542370 deployed and verified web successfully, moving deployed-web to 04f697d. Its API release command applied migration 0010 at 06:59:26 UTC, then failed during the existing organization bootstrap with `Connection terminated unexpectedly`. Fly aborted API rollout, and deployed-api was not advanced. This proves migration application via release logs, not successful activation of the rate limiter. The additive table is compatible with the old API. No destructive recovery was attempted. The next trusted main deployment should retry pending API changes; record its actual outcome below.
+
+Independent safe checks after web deployment: /kreator 200 but demo fallback/no form; /ready 200; /leads 401; empty POST /api/inquiry 400. These do not prove the new API budget is active.
+
+## Verified checkpoint 2026-09-29
+Retry 36534332017 also failed in organization bootstrap with the same connection termination. Migration 0010 is applied; API rollout remains BLOCKED. Tags independently read: deployed-web = 04f697d; deployed-api = d43bb53. Readiness remains 200 and unauthenticated /leads 401. The budget is TESTED / MERGED / MIGRATED, not API DEPLOYED or PRODUCTION VERIFIED. Diagnose the production database before further identical retries.

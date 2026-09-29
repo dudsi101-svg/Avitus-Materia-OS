@@ -1,6 +1,6 @@
 # Hardening 03 — deployment provenance
 
-Date: 2026-09-29. Status: IMPLEMENTED / locally TESTED; remote CI, merge and workflow verification pending.
+Date: 2026-09-29. Status: TESTED / MERGED / workflow active on main.
 
 ## Problem and evidence
 
@@ -18,7 +18,7 @@ A dependency-free regression script evaluates the actual YAML predicate using a 
 
 ## Verification
 
-Before the fix, the regression failed because a same-repository PR was admitted. After the fix, all ten scenarios pass. This is a synthetic predicate test, not a live attack. Remote CI and the production workflow must be checked after merge. There is no migration or application smoke requirement for the predicate itself; existing application health remains independently checked.
+Before the fix, the regression failed because a same-repository PR was admitted. After the fix, all ten scenarios pass. This is a synthetic predicate test, not a live attack. PR CI 36533882562 passed all checks, including the ten provenance scenarios. PR #31 merged as `7f94a656cc587483fbe299b6437045d3680048da`. Main CI 36534116244 passed. Production workflow 36534332017 admitted the successful same-repository main push and started the deployment job. Negative provenance cases are covered synthetically; no malicious live run was triggered. The pending API retry from PR30 is tracked in Hardening 02. There is no migration or application smoke requirement for the predicate itself; existing application health remains independently checked.
 
 ## Risks and rollback
 

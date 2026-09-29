@@ -3,14 +3,14 @@
 Protocol: `docs/COORDINATION.md`. Update this file whenever you start, hand off or finish a lane.
 PRs on GitHub are the tie-breaker if this board is stale.
 
-_Last updated: 2026-09-28_
+_Last updated: 2026-09-29_
 
 ## Active lanes
 
 | Lane | Owner | Branch | PR | Touches | Status |
 |---|---|---|---|---|---|
-| Public intake durable budget + proxy failure handling | Codex | `codex/public-intake-budget` | #30 | database 0010, config, API controllers/composition/filter, web proxies, tests, docs | Merged; main CI/deployment verification pending |
-| Deployment trust boundary | Codex | `codex/deployment-trust-boundary` | pending | CI/deploy workflows, regression guard, docs | Claimed 2026-09-29; no migration/DD/sprint reservation |
+| Public intake durable budget + proxy failure handling | Codex | `codex/public-intake-budget` | #30 | database 0010, config, API controllers/composition/filter, web proxies, tests, docs | BLOCKED: migration applied; API bootstrap connection fails in two release runs |
+| Deployment trust boundary | Codex | `codex/deployment-trust-boundary` | #31 | CI/deploy workflows, regression guard, docs | Merged; main CI passed; trusted push admitted; PR30 API retry failed independently |
 
 ## Reservations
 
@@ -29,7 +29,7 @@ Take the next free value, write your lane next to it, commit together with your 
 | 0007 | Sprint 6 configuration request conversions | merged |
 | 0008 | Sprint 8 Quote governance | merged (PR #27) |
 | **0009** | **Sprint 9 Accepted Quote → Order + Project** | **merged (PR #28); deployed API run 78** |
-| 0010 | Public intake durable budget | reserved |
+| 0010 | Public intake durable budget | merged (PR #30) |
 | 0011 | _next free_ | — |
 
 ### Decision IDs (`docs/DECISIONS.md`)
@@ -43,7 +43,7 @@ Take the next free value, write your lane next to it, commit together with your 
 | DD-027 | Conversion of public configuration requests is explicit, atomic and one-time | merged |
 | DD-028 | QuoteVersion is the immutable customer-ready commercial snapshot | merged |
 | **DD-029** | **Accepted QuoteVersion is the commercial source for Order; Project is separate execution** | **merged (PR #28); deployed API run 78** |
-| DD-030 | Public intake shared durable budget | reserved |
+| DD-030 | Public intake shared durable budget | merged (PR #30) |
 | DD-031 | _next free_ | — |
 
 ### Sprint numbers
@@ -95,4 +95,4 @@ Customer identity was rebuilt on current `main` and merged as PR #17 with both a
 Sprint 9 merged as PR #28 at `68ea544`; CI run 36449482063 succeeded; API deploy run 36449743352 succeeded. No open PRs at claim time. Sprint 9 UI and production operator authentication remain missing; deployment does not prove a usable authenticated journey.
 
 ## Hardening reconciliation completed
-PR #29 merged at `d43bb53`; PR CI 36464939159, main CI 36465241308 and API deploy 36465461468 succeeded. No migration. HTTP error serialization is allowlisted; Gate 1 remains open. Browser found ConfiguratorLite fallback on production (R17), not verified working intake. No active implementation claim remains.
+PR #29 merged at `d43bb53`; PR CI 36464939159, main CI 36465241308 and API deploy 36465461468 succeeded. No migration. HTTP error serialization is allowlisted; Gate 1 remains open. Browser found ConfiguratorLite fallback on production (R17), not verified working intake. At that checkpoint no active implementation claim remained; current lanes are listed above.

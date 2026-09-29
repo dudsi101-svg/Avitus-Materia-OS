@@ -35,7 +35,7 @@ Status is per capability, not per whole module. DEPLOYED is not PRODUCTION VERIF
 | Domain | Capability | Status | Evidence | Risk | Missing | Priority | Next action |
 |---|---|---|---|---|---|---|---|
 | Web | Public site/configurator reachability | PRODUCTION VERIFIED | E4; apps/web | Browser confirms demo fallback, not working intake | Catalog connectivity/runtime verification; mobile/a11y review | P2 | Browser acceptance after identity |
-| Acquisition | Inquiry/configuration intake | PARTIAL | E2/E3; controllers + proxies + E2E | Public abuse | Rate budget, idempotency, timeout/failure handling | P0 | Protect writes before wider launch |
+| Acquisition | Inquiry/configuration intake | PARTIAL | E2/E3; controllers + proxies + E2E | Public abuse | Edge/per-client controls, size bounds, idempotency | P0 | PR30 adds tested durable budget and safe proxy handling; verify remaining ingress protections |
 | CRM | Lead/Opportunity/customer linking | DEPLOYED | E6; migrations 0001/0004/0007 | Operator cannot use in prod | Authenticated surface | P1 | Gate 2 |
 | Identity | Production user login/session | BLOCKED | E4/E5 | No usable internal access | IdP integration/provisioning/session model | P1 | Select/configure approved identity tenant |
 | IAM | Permission/membership foundation | IMPLEMENTED | modules/iam; seed-dev | Cross-org role assignment not DB constrained | Role matrix; role/org constraint; permission tests | P0 | Validate before enabling internal login |
@@ -55,7 +55,7 @@ Status is per capability, not per whole module. DEPLOYED is not PRODUCTION VERIF
 | Events | Transactional outbox persistence | IMPLEMENTED | modules/events; 0000 | Events accumulate | Worker/retries/DLQ/consumer dedupe | P2 | Gate 10 |
 | Observability | Correlation ID + health/readiness | PRODUCTION VERIFIED | E4; middleware | Failures invisible between probes | Alerts, structured request logs, error sink | P0 | Gate 1 |
 | Recovery | Backup/restore proof | BLOCKED | No control-plane proof | Data-loss recovery unknown | Backup inventory, isolated restore drill | P0 | Obtain Fly recovery evidence |
-| Privacy | PII-safe exception logging | PARTIAL | baseline filter logs raw exception | SQL params/PII may enter logs | Allowlisted failure records | P0 | First hardening slice |
+| Privacy | PII-safe HTTP exception logging | DEPLOYED | PR29 + CI + API release 36465461468 | Other log paths need separate review | Broader privacy lifecycle | P0 slice closed | Retain regression tests; verify all logging surfaces |
 | GDPR | Retention/export/erasure/legal basis | DESIGNED | DOMAIN_RULES; no implemented lifecycle | PII kept without operational lifecycle | Owner legal policy + implementation | P0 | Before real customer rollout |
 | AI | Controlled context/actions | DESIGNED | policy docs | No trustworthy operational history | Context access controls + evaluation | P3 | Gate 11 after closed loop |
 | Partners | Manufacturing network | DESIGNED | docs only | Premature platform work | Validated business demand | P4 | Gate 12 |
@@ -141,15 +141,15 @@ AI readiness: text drafting with human review is feasible with approved inputs. 
 | TD6 | Deployment target regex omits packages/shared | Shared-only change may not deploy API | P1 | Dependency-aware target test and fix |
 | TD7 | Outbox write-only | Automation cannot deliver | P2 | Small publisher with dedupe/retry/DLQ |
 | TD8 | No runtime commit/schema attestation | Deployment trace weak | P2 | Build revision + safe schema readiness |
-| TD9 | Public proxy fetch no timeout/catch | Customer uncertainty/duplicates | P1 | Timeout + safe error + retry contract |
+| TD9 | Proxy timeout/catch addressed by PR30; idempotency remains open | Ambiguous successful writes may be resubmitted | P1 partial | Preserve no automatic retry; add durable idempotency contract |
 | TD10 | Dependency advisories | Avoidable supply-chain exposure | P1 pending reachability | Patch supported versions and CI |
 
 ## G. Risk register P0–P4
 
 | ID | Priority | Risk / evidence | Owner | Closure proof |
 |---|---|---|---|---|
-| R01 | P0 | Raw HTTP exception can leak PII (baseline filter) | Engineering | Redaction regression test + deploy |
-| R02 | P0 | Public intake abuse has no code-level rate budget | Engineering | 429 under bounded test, healthy recovery, trusted identity boundary |
+| R01 | P0 — closed for HTTP filter | Raw exception serialization removed by PR29 | Engineering | 3 regression tests, main CI and API deployment 36465461468 |
+| R02 | P0 — PARTIAL | PR30 bounds writes with a durable org budget; edge/per-client/size protections still unverified | Engineering | DB concurrency, HTTP 429 and proxy timeout tests passed; complete ingress protections and alert evidence |
 | R03 | P0 | Backup recovery unverified (control-plane access absent) | Operations/owner | Isolated restore, integrity checks, measured RPO/RTO |
 | R04 | P0 | No verified alerting: outage may be reported by customer | Operations | Deliberate staging fault produces alert to approved destination |
 | R05 | P0 before auth rollout | Role tenant and relational isolation incomplete | Engineering | Cross-tenant writes denied by constraints/permissions and tests |
@@ -239,6 +239,6 @@ R17 was found during additional read-only browser verification: current page is 
 
 | ID | Priority | Finding | Evidence | Status / next action |
 |---|---|---|---|---|
-| R18 | P0 | Privileged workflow_run deploy admitted successful PR heads named main | deploy-fly.yml at 04f697d; predicate regression fails before fix | Hardening 03 locally tested; require successful same-repository push to main, then verify merged workflow |
+| R18 | P0 | Privileged workflow_run deploy admitted successful PR heads named main | deploy-fly.yml at 04f697d; predicate regression fails before fix | PR31 merged 7f94a65; ten regression scenarios + PR/main CI passed; workflow 36534332017 starts for trusted main push. R18 predicate fixed; no exploit attempted |
 
 This finding supersedes any assumption that successful CI plus branch name alone establishes deployment provenance. No evidence of exploitation was collected.

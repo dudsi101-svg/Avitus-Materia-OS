@@ -1,6 +1,6 @@
 # Next Action
 
-Updated 2026-09-28 after reconciliation of main `68ea544` and API deploy #78.
+Updated 2026-09-29 after reconciliation and hardening PRs #29–#31.
 Read WORK_BOARD and COORDINATION before claiming a lane.
 
 ## Current position
@@ -8,8 +8,8 @@ Sprint 9 is merged and API-deployed, not merely planned. Internal production aut
 
 ## Ordered queue
 1. **Completed:** PR #29 raw HTTP exception redaction + reconciled docs; full main CI and API deployment 36465461468 succeeded; no migration. Continue with remaining Gate 1 controls below.
-2. Diagnose production ConfiguratorLite fallback: verify runtime catalog/credential configuration without exposing secrets; restore catalog UI and meaningful smoke. Fix deployment target coverage for `packages/shared`; patch triaged dependency advisories with full CI.
-3. Public intake rate limits/timeout/idempotency/security headers; verify recovery and alerting with actual provider evidence.
+2. Diagnose production ConfiguratorLite fallback (still observed after PR30 web deploy): verify runtime catalog/credential configuration without exposing secrets; restore catalog UI and meaningful smoke. Fix deployment target coverage for `packages/shared`; patch triaged dependency advisories with full CI.
+3. PR30 implemented durable intake budget + safe proxy timeout/429. Finish edge/per-client/request-size/idempotency/security-header controls; verify recovery and alerting with actual provider evidence.
 4. Tenant role/FK invariants + Sprint 9 permission/tenant/concurrency/failure-path tests.
 5. Production identity and authenticated admin; acceptance/Order/Project UI; real browser proof.
 6. Finish commercial document/sending/acceptance evidence and Order/Project execution scope.
@@ -19,7 +19,7 @@ Sprint 9 is merged and API-deployed, not merely planned. Internal production aut
 ## Real access / owner dependencies
 Identity provider application configuration; Fly backup/restore and alert access; approved alert recipients; verified workshop facts; legal retention/payment/acceptance policy. Do not ask for secrets in chat. Continue independent safe engineering while these are pending.
 
-## Active lane 2026-09-29
-Finish Hardening 02 (`codex/public-intake-budget`): migration 0010, durable shared budget for both public writes, web timeout/429 handling. Run real PostgreSQL CI before merge and release. Then verify deployed API and web behavior; do not consume production budget with load tests or create fake customer records.
+## Handoff 2026-09-29
+Hardening 02: PR30 merged, migration 0010 / DD-030; real PostgreSQL concurrency tests and full CI passed. Hardening 03: PR31 merged; privileged deployment now requires successful same-repository push CI on main. See the implementation documents for final release evidence.
 
-Deployment safety interruption (2026-09-29): finish Hardening 03 CI/merge verification for R18 P0, then record PR30 release evidence and continue Gate 1. Do not treat a green PR CI run as authorization to deploy its head.
+Immediate priority: diagnose repeated production bootstrap connection termination (release runs 36533542370 and 36534332017). Migration 0010 succeeded; API budget is not deployed. Use bounded read-only diagnostics, retain the current API, and do not blindly repeat deployment. Then tenant role/FK preflight and negative tests (R05), or dependency-compatible advisory repairs. Keep deployment target coverage R13 and configurator observability R17 visible. Do not claim Gate 1 complete or move to autonomous pricing/capacity.
