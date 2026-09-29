@@ -9,7 +9,9 @@ _Last updated: 2026-09-29_
 
 | Lane | Owner | Branch | PR | Touches | Status |
 |---|---|---|---|---|---|
-| Tenant membership authorization | Codex | `codex/tenant-role-integrity` | pending | IAM repository/tests, read-only preflight, docs | Claimed 2026-09-29; no migration or identifier reservation |
+| Tenant membership authorization | Codex | `codex/tenant-role-integrity` | #34 | IAM repository/tests, read-only preflight, docs | Merged; seven PostgreSQL tests and full PR CI passed; API release blocked by recurring bootstrap connection termination; preflight invalid_memberships=0 |
+
+| Bootstrap transient recovery | Codex | `codex/bootstrap-retry` | pending | database bootstrap helper/tests, release evidence docs | Claimed; bounded retries of existing idempotent bootstrap, no migration |
 
 ## Reservations
 
