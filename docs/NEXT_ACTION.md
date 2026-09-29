@@ -21,3 +21,5 @@ Identity provider application configuration; Fly backup/restore and alert access
 
 ## Active lane 2026-09-29
 Finish Hardening 02 (`codex/public-intake-budget`): migration 0010, durable shared budget for both public writes, web timeout/429 handling. Run real PostgreSQL CI before merge and release. Then verify deployed API and web behavior; do not consume production budget with load tests or create fake customer records.
+
+Deployment safety interruption (2026-09-29): finish Hardening 03 CI/merge verification for R18 P0, then record PR30 release evidence and continue Gate 1. Do not treat a green PR CI run as authorization to deploy its head.

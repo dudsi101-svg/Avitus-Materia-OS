@@ -9,7 +9,8 @@ _Last updated: 2026-09-28_
 
 | Lane | Owner | Branch | PR | Touches | Status |
 |---|---|---|---|---|---|
-| Public intake durable budget + proxy failure handling | Codex | `codex/public-intake-budget` | pending | database 0010, config, API controllers/composition/filter, web proxies, tests, docs | Claimed 2026-09-29; migration 0010 and DD-030 reserved |
+| Public intake durable budget + proxy failure handling | Codex | `codex/public-intake-budget` | #30 | database 0010, config, API controllers/composition/filter, web proxies, tests, docs | Merged; main CI/deployment verification pending |
+| Deployment trust boundary | Codex | `codex/deployment-trust-boundary` | pending | CI/deploy workflows, regression guard, docs | Claimed 2026-09-29; no migration/DD/sprint reservation |
 
 ## Reservations
 
