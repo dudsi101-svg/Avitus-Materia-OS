@@ -55,3 +55,6 @@ R18 P0 found in workflow_run job predicate: branch name plus CI success did not 
 Main and API tag: d3a8de6; web tag: 04f697d. PR30 migration 0010 applied and API budget is now DEPLOYED. Successful release 36565136322 supersedes two earlier bootstrap connection failures. PR32/33 add bounded, privacy-safe, read-only release diagnostics; all PR/main CI runs passed. Preflight found organization present, two products and no visible lock waits. Original transient connection failure root cause is not established.
 
 PR31 deployment provenance protection is active on main. The rate-budget 429 behavior is proven in real PostgreSQL/HTTP CI, not by a production load test. Broader R02 controls remain open. See IMPLEMENTATION_HARDENING_02/03/04 for exact evidence.
+
+## Hardening 05 in progress
+R05: single-statement active tenant/user/membership authorization with matching role scope, seven PostgreSQL integration cases, and a privacy-safe production integrity count. No migration or IdP change. Local checks passed; CI/release proof pending. See IMPLEMENTATION_HARDENING_05.md.
