@@ -11,3 +11,9 @@ Outputs: server recovery/read-only booleans, configured organization existence, 
 Acceptance: full CI; trusted-main workflow starts; diagnostic either provides these bounded facts or fails closed before another rollout. If preflight passes, normal release can proceed with new database evidence. SSH permissions may be narrower than deployment permissions; if access is denied, record the exact missing permission rather than weakening authentication. Remove or refine this incident preflight after root cause resolution; it requires an already-running API and is not a first-deployment bootstrap mechanism.
 
 Remaining questions: database lock wait vs connection/proxy termination; organization/catalog availability; current provider health. Aggregate pg_stat_activity visibility depends on database privileges and does not prove all sessions are visible.
+
+## Verification checkpoint
+PR #32 merged as f264943e56eb7b5cf55322ffa3fb43cada004ca5. PR CI 36563933592 passed full migrations/seed/lint/typecheck/tests/build and the three diagnostic safety tests. Local YAML and embedded Python parsed successfully; deployment provenance guard still passes ten scenarios. Main CI 36564185230 passed. Live preflight run 36564411891 reached the API over SSH, then failed at connect with SQLSTATE 08P01. No diagnostic query or new release was executed.
+
+### Pooler compatibility correction
+The first diagnostic supplied statement_timeout in the PostgreSQL startup packet. PgBouncer may reject untracked startup parameters (https://www.pgbouncer.org/config#ignore_startup_parameters); 08P01 is consistent with this, but does not prove the original bootstrap failure cause. Move the timeout to SET LOCAL inside BEGIN READ ONLY, retaining client/process deadlines. Tests require the local timeout and prohibit the startup parameter. No provider settings are changed.

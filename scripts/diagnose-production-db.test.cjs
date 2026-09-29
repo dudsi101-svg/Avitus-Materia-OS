@@ -5,7 +5,7 @@ const env = { DATABASE_URL: 'secret-url', PUBLIC_INQUIRY_ORGANIZATION_ID: '22222
 function fake(fail = false) {
   const queries = []; let ended = false;
   class Pool {
-    constructor(options) { assert.equal(options.max, 1); assert.equal(options.statement_timeout, 5000); }
+    constructor(options) { assert.equal(options.max, 1); assert.equal(options.statement_timeout, undefined); assert.equal(options.query_timeout, 7000); }
     on() {}
     async connect() { return { query: async (sql) => {
       queries.push(sql);
@@ -21,7 +21,8 @@ test('diagnostics are read-only, bounded and output only numeric/boolean allowli
   assert.equal(await diagnose(f.Pool, env, r => records.push(r)), true);
   assert.equal(f.queries[0], 'BEGIN READ ONLY');
   assert.equal(f.queries.at(-1), 'ROLLBACK');
-  assert.ok(f.queries.slice(1, -1).every(q => q.startsWith('SELECT')));
+  assert.equal(f.queries[1], "SET LOCAL statement_timeout = '5s'");
+  assert.ok(f.queries.slice(2, -1).every(q => q.startsWith('SELECT')));
   assert.equal(records.length, 5); assert.ok(f.ended());
   assert.doesNotMatch(JSON.stringify(records), /private|secret-url|22222222|email/);
 });
