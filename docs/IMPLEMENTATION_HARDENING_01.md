@@ -24,8 +24,9 @@ Less detail for debugging: use correlation ID plus service/audit state; do not r
 - Dependencies compiled with TypeScript in dependency order (13 workspace packages). Initial test/typecheck attempts before building workspace dependencies could not resolve packages; rerun after build is authoritative.
 - Local API typecheck after dependency build: passed.
 - Module boundary and coordination checks: passed.
-- Full PostgreSQL integration/clean-load suite: delegated to repository CI; local PostgreSQL is not installed. Do not claim skipped DB tests passed locally.
-- PR / main CI / deployment / production verification: pending. This file must be updated with observed evidence before calling the slice done.
+- Full PostgreSQL CI: PR run 36464939159 and main run 36465241308 succeeded, including migrate/seed, lint, typecheck, tests and build. API suite: 23 tests in 11 files. Local PostgreSQL was not installed.
+- PR #29 merged as `d43bb53351731bce3cc9482dcdb55698c8219c75`. Fly deployment run 36465461468 succeeded (2026-09-28 18:31 UTC), API readiness and deployed-api tag update passed; tag points to this exact merge. No migration was introduced.
+- Independent post-deploy HTTP smoke on Sep 28: API `/ready` returned 200 with ready body and internal `/leads` returned 401. Public web retry timed out from the execution client; earlier browser observation confirmed demo fallback. Privacy failure behavior is regression-tested; no production fault was deliberately injected, so no claim of a live 500/redaction drill.
 
 ## Rollback
 Revert the filter change if it breaks response handling, retaining tests as appropriate; no database rollback needed. Reverting reintroduces log privacy risk, so prefer a corrected allowlisted serializer. No client contract changed.

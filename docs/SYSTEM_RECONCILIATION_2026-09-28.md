@@ -5,7 +5,7 @@ Scope: repository source, migrations 0000–0009, workflow definitions/results, 
 
 ## A. Executive audit summary
 
-The system is a deployed sales foundation, not yet an operational OS v1. Sprint 9 already implements Quote acceptance and atomic Order + Project creation. PROJECT_STATE, NEXT_ACTION, WORK_BOARD and README lag behind code. API deployment success must not be confused with an authenticated operational journey: production rejects internal requests because the external identity adapter is absent. The admin still uses development headers, and has no acceptance/order/project controls.
+The system is a deployed sales foundation, not yet an operational OS v1. A later live browser check also found `/kreator` serving ConfiguratorLite (demo controls, no configuration submission), despite HTTP 200. The catalog-driven customer journey is therefore not production verified. Sprint 9 already implements Quote acceptance and atomic Order + Project creation. PROJECT_STATE, NEXT_ACTION, WORK_BOARD and README lag behind code. API deployment success must not be confused with an authenticated operational journey: production rejects internal requests because the external identity adapter is absent. The admin still uses development headers, and has no acceptance/order/project controls.
 
 Physical Truth sources are preparation templates with unverified catalog candidates, not a measured workshop inventory. Actual cost, production, QC and delivery are still absent from executable code. AI pricing/capacity recommendations would currently lack a valid data foundation.
 
@@ -23,6 +23,7 @@ Immediate priorities: protect current public intake and PII, establish recovery/
 | E6 | Sales/acceptance implementation | `modules/{acquisition,customers,crm,configurator,pricing,quotes}/src/index.ts`, `apps/api/src/order-flow.ts`, migration 0009 and `order-flow.e2e.test.ts` |
 | E7 | Data sources read | Physical Truth Master; Szybki zapis z hali; Karta produktu i procesu; KUBA — szybka weryfikacja realizacji; TOP MEBLE – Inwentaryzacja i migracja stolarni; folder 20_PHYSICAL_TRUTH_OS. Read-only; metadata modified Sep 26–27, content inspected Sep 28 |
 | E8 | Dependency audit | `pnpm audit --prod --json`: 0 critical, 3 high, 2 moderate advisories. Scanner results need reachability triage; not proof of exploitation |
+| E10 | Browser observation | Live `/kreator` rendered `Ustalmy punkt startowy`, fixed select/slider fields and `wersja robocza`; no submission form. This matches ConfiguratorLite. `loadConfiguratorProducts` silently returns null on missing env, upstream error or timeout; an empty catalog also activates fallback. Exact production cause remains unknown |
 | E9 | Collaboration | No open PRs and no open issues returned at reconciliation start. Work board Sprint 9 claim is stale, not a live conflicting lane |
 
 Migration 0009 is present and the release command runs migration + production bootstrap; E3 supports deployed schema, but the production migration ledger was not directly queried. Runtime SHA attestation is absent. No Fly control-plane backup, restore, secret or alert configuration was accessible in this audit. Absence of evidence is marked BLOCKED rather than invented success.
@@ -33,8 +34,8 @@ Status is per capability, not per whole module. DEPLOYED is not PRODUCTION VERIF
 
 | Domain | Capability | Status | Evidence | Risk | Missing | Priority | Next action |
 |---|---|---|---|---|---|---|---|
-| Web | Public site/configurator reachability | PRODUCTION VERIFIED | E4; apps/web | HTTP only | Real mobile/browser journey and a11y review | P2 | Browser acceptance after identity |
-| Acquisition | Inquiry/configuration intake | DEPLOYED | E2/E3; controllers + proxies + E2E | Public abuse | Rate budget, idempotency, timeout/failure handling | P0 | Protect writes before wider launch |
+| Web | Public site/configurator reachability | PRODUCTION VERIFIED | E4; apps/web | Browser confirms demo fallback, not working intake | Catalog connectivity/runtime verification; mobile/a11y review | P2 | Browser acceptance after identity |
+| Acquisition | Inquiry/configuration intake | PARTIAL | E2/E3; controllers + proxies + E2E | Public abuse | Rate budget, idempotency, timeout/failure handling | P0 | Protect writes before wider launch |
 | CRM | Lead/Opportunity/customer linking | DEPLOYED | E6; migrations 0001/0004/0007 | Operator cannot use in prod | Authenticated surface | P1 | Gate 2 |
 | Identity | Production user login/session | BLOCKED | E4/E5 | No usable internal access | IdP integration/provisioning/session model | P1 | Select/configure approved identity tenant |
 | IAM | Permission/membership foundation | IMPLEMENTED | modules/iam; seed-dev | Cross-org role assignment not DB constrained | Role matrix; role/org constraint; permission tests | P0 | Validate before enabling internal login |
@@ -86,7 +87,7 @@ Weak points:
 
 No end-to-end test currently proves the full user-requested journey. `order-flow.e2e.test.ts` is one happy-path API integration test with sequential replay, audit/events and immutable revision check. It is not a browser test or concurrent/tenant/permission/failure-path suite. Earlier sales modules have broader negative/tenant tests; do not extrapolate that coverage to Sprint 9.
 
-Frontend source offers catalog-driven options, loading/error messages and development Command Center controls. Production mobile/a11y/keyboard behavior was not exercised here. Network exceptions/timeouts in public Next proxies are not handled explicitly; duplicate clicks can create separate intake records. Acceptance/order/project controls were not found in admin.
+Frontend source offers catalog-driven options, loading/error messages and development Command Center controls. A read-only live browser check instead observed the ConfiguratorLite fallback without submission, so current production catalog intake is not verified. Production mobile/a11y/keyboard behavior was not exercised here. Network exceptions/timeouts in public Next proxies are not handled explicitly; duplicate clicks can create separate intake records. Acceptance/order/project controls were not found in admin.
 
 ## D. Security & production readiness
 
@@ -162,6 +163,7 @@ AI readiness: text drafting with human review is feasible with approved inputs. 
 | R13 | P1 | Shared package changes may skip API deployment | Engineering | Deployment detection regression cases |
 | R14 | P2 | No publisher/docs/communication delivery | Engineering | Outbox proof and delivery audit |
 | R15 | P3 | AI over sparse/unapproved data | Product | Evaluation set + context permissions after v1 |
+| R17 | P1 | Live configurator silently falls back to a demo; 200 health hides broken journey (E10) | Engineering/operations | Verify runtime catalog connectivity/credential configuration without exposing values, restore catalog UI, add business-capability probe |
 | R16 | P4 | Premature network/platform | Owner | Demonstrated own-workshop loop + partner pilot need |
 
 P0 classification is complete for the inspected surface; findings may expand with control-plane and authenticated testing. No claim that all vulnerabilities have been discovered.
@@ -214,7 +216,7 @@ Every package includes schema if needed -> domain -> API -> UI -> tests -> deplo
 
 1. Reconcile state/board/README/roadmap to E1–E9 and commit this baseline.
 2. Replace raw HTTP exception logging with allowlisted JSON; test nested SQL/PII redaction and 503 signal; deploy through CI.
-3. Fix deploy target coverage for packages/shared with regression cases.
+3. Diagnose live ConfiguratorLite fallback (E10), restore catalog-backed UI and business smoke; fix deploy target coverage for packages/shared with regression cases.
 4. Triage/pin patched Drizzle/PostCSS dependencies, run full CI and migration/quote regression.
 5. Add public ingress/write budgets plus proxy timeout/retry/idempotency behavior, preserving org trust boundary.
 6. Verify Fly backup/PITR inventory and restore into an isolated database; measure RPO/RTO and retain sanitized evidence.
@@ -226,3 +228,9 @@ Every package includes schema if needed -> domain -> API -> UI -> tests -> deplo
 ## Owner input / access dependencies
 
 Not needed for this first reversible patch. Later: production identity tenant/app registration and credentials; Fly recovery/alert configuration access; approved alert recipients; actual workshop records/recorder; legal retention and commercial acceptance/payment policy. Never send secret values in chat or commit them. These dependencies do not block code review, safe fixes, tests or documentation.
+
+## Post-baseline implementation evidence
+
+PR #29 merged as `d43bb53351731bce3cc9482dcdb55698c8219c75`. PR CI 36464939159 and main CI 36465241308 passed (including PostgreSQL migration/seed/tests/build). API deploy [36465461468](https://github.com/dudsi101-svg/Avitus-Materia-OS/actions/runs/36465461468) succeeded at 18:31 UTC; readiness passed and deployed-api tag matches the merge. R01 is remediated for the HTTP filter scope: raw exceptions are not serialized; 3 regression tests cover private SQL/cause data, arbitrary thrown values and 503/400 behavior. Other P0s remain open. No live production 500 was deliberately induced; do not interpret this as a full telemetry/alert drill.
+
+R17 was found during additional read-only browser verification: current page is a demo fallback with no submission form. This overrides older documentation claiming a functioning production configurator journey. Resolve runtime catalog/deployment configuration before treating acquisition E2E as production verified. Direct DNS queries were unavailable from the execution resolver; successful HTTPS probes/browser loading establish reachability, not an authoritative DNS-zone audit. No DNS/mail records changed.

@@ -9,7 +9,7 @@ _Last updated: 2026-09-28_
 
 | Lane | Owner | Branch | PR | Touches | Status |
 |---|---|---|---|---|---|
-| System reconciliation + safe API error logging | Codex | `codex/system-reconciliation-hardening` | pending | API error filter/tests; audit and state documentation | Claimed; no migration, DD or sprint number required |
+| — | — | — | — | — | No active claim; next lane must claim before implementation |
 
 ## Reservations
 
@@ -90,3 +90,6 @@ Customer identity was rebuilt on current `main` and merged as PR #17 with both a
 
 ## Reconciliation evidence (2026-09-28)
 Sprint 9 merged as PR #28 at `68ea544`; CI run 36449482063 succeeded; API deploy run 36449743352 succeeded. No open PRs at claim time. Sprint 9 UI and production operator authentication remain missing; deployment does not prove a usable authenticated journey.
+
+## Hardening reconciliation completed
+PR #29 merged at `d43bb53`; PR CI 36464939159, main CI 36465241308 and API deploy 36465461468 succeeded. No migration. HTTP error serialization is allowlisted; Gate 1 remains open. Browser found ConfiguratorLite fallback on production (R17), not verified working intake. No active implementation claim remains.

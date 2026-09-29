@@ -7,8 +7,8 @@ Read WORK_BOARD and COORDINATION before claiming a lane.
 Sprint 9 is merged and API-deployed, not merely planned. Internal production auth is absent; Order/Project are minimal API aggregates. No complete manufacturing/cost loop exists. See SYSTEM_RECONCILIATION_2026-09-28.md for evidence and risk priorities.
 
 ## Ordered queue
-1. Complete and verify `codex/system-reconciliation-hardening`: raw HTTP exception redaction + reconciled docs; no migrations.
-2. Fix deployment target coverage for `packages/shared`; patch triaged dependency advisories with full CI.
+1. **Completed:** PR #29 raw HTTP exception redaction + reconciled docs; full main CI and API deployment 36465461468 succeeded; no migration. Continue with remaining Gate 1 controls below.
+2. Diagnose production ConfiguratorLite fallback: verify runtime catalog/credential configuration without exposing secrets; restore catalog UI and meaningful smoke. Fix deployment target coverage for `packages/shared`; patch triaged dependency advisories with full CI.
 3. Public intake rate limits/timeout/idempotency/security headers; verify recovery and alerting with actual provider evidence.
 4. Tenant role/FK invariants + Sprint 9 permission/tenant/concurrency/failure-path tests.
 5. Production identity and authenticated admin; acceptance/Order/Project UI; real browser proof.

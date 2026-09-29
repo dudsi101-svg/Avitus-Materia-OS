@@ -9,6 +9,7 @@
 - Sprint 9 merged in PR #28; main CI #136 / run 36449482063 passed.
 - Fly API deployment #78 / run 36449743352 attempt 2 passed, including readiness; web skipped.
 - Live production `/ready` 200 and public `/kreator` 200; internal `/leads` 401 because external identity adapter is absent.
+- Browser inspection of `/kreator` shows ConfiguratorLite demo without configuration submission. A successful HTTP check does not establish functioning catalog intake; runtime cause is unresolved (R17).
 - Migration 0009 is in the release path; production migration ledger not independently queried.
 - Full baseline, risk register P0–P4, gaps, dependencies, gates and first ten actions: [SYSTEM_RECONCILIATION_2026-09-28.md](SYSTEM_RECONCILIATION_2026-09-28.md).
 
@@ -31,8 +32,8 @@ Sprint 9: explicit acceptance of a SENT QuoteVersion; separate quote_acceptances
 - Material/production/QC/delivery/actual-cost loop does not exist yet; pricing margin is estimated, not actual.
 - Outbox worker, production identity, privacy lifecycle and AI context tooling are not implemented.
 
-## Active hardening slice
-Branch `codex/system-reconciliation-hardening`: reconcile durable state and replace raw HTTP exception logging with allowlisted JSON failures. No migration or business-rule change. See [IMPLEMENTATION_HARDENING_01.md](IMPLEMENTATION_HARDENING_01.md) for validation and deployment state; do not infer deployment from this branch's source.
+## Completed first hardening deployment
+PR #29 merged as `d43bb53`; full main CI 36465241308 passed; API deployment 36465461468 and readiness passed; deployed-api tag matches. Raw HTTP exception logging is replaced with allowlisted JSON. Three privacy/error regression tests passed; no migration or business-rule change. See [IMPLEMENTATION_HARDENING_01.md](IMPLEMENTATION_HARDENING_01.md) for limits and verification evidence. Gate 1 remains open.
 
 ## Next sequence
 1. Gate 1: PII-safe errors, public abuse controls, recovery proof, alerts, dependency/security/privacy baseline.
