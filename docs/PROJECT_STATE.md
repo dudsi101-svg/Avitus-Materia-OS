@@ -1,63 +1,39 @@
 # Avitus Materia OS — Project State
 
-**Checkpoint:** System reconciliation + production hardening
-**Date:** 2026-09-29
-**Original audit baseline:** `68ea54441881c978eb6f18e8d4ae354689c1bf55`; release evidence below supersedes original hardening gaps.
+**Checkpoint:** 2026-09-29, production hardening after Sprint 9.
 **Verdict:** deployed sales foundation; operational v1 is not complete.
 
-## Evidence
-- Sprint 9 merged in PR #28; main CI #136 / run 36449482063 passed.
-- Fly API deployment #78 / run 36449743352 attempt 2 passed, including readiness; web skipped.
-- Live production `/ready` 200 and public `/kreator` 200; internal `/leads` 401 because external identity adapter is absent.
-- Browser inspection of `/kreator` shows ConfiguratorLite demo without configuration submission. A successful HTTP check does not establish functioning catalog intake; runtime cause is unresolved (R17).
-- Migration 0009 is in the release path; production migration ledger not independently queried.
-- Full baseline, risk register P0–P4, gaps, dependencies, gates and first ten actions: [SYSTEM_RECONCILIATION_2026-09-28.md](SYSTEM_RECONCILIATION_2026-09-28.md).
+## Verified release evidence
+- PR34/35: main CI 36568275366 and API deploy 36568473095 succeeded; deployed-api 56440aa. Active tenant/user/membership + matching role authorization and bounded bootstrap connection recovery are deployed.
+- Production HTTP: /ready 200; unauthenticated /leads 401. External identity remains fail-closed and has no production login adapter.
+- Role-integrity preflight: 0 invalid memberships. This is a point-in-time read, not a database write guarantee.
+- Latest API release: 18b10a9. PR36 CI 36611428280 and main CI 36611710542 passed migration 0011, nine IAM cases and actual-SQL legacy rollback proof. Deployment 36611978132 succeeded, including migration/bootstrap and readiness; deployed-api tag matches.
+- Web tag 04f697d: public proxy timeout/429 handling deployed. /kreator still renders ConfiguratorLite demo without a submission form despite two products existing in the database (R17).
+- Full audit A–K, risks and dependency/gate plan: SYSTEM_RECONCILIATION_2026-09-28.md. Hardening 01–07 documents preserve incident and test evidence.
 
-## Implemented / deployed scope
-Modular monolith: Next.js web/admin, NestJS API, PostgreSQL/Drizzle, scoped services, exact decimal pricing, audit/events/transactional outbox.
+## Capability baseline
+| Domain | Current truth | Status / remaining work |
+|---|---|---|
+| Architecture | Modular monolith; Next web/admin, Nest API, PostgreSQL/Drizzle, scoped services, exact decimal pricing, audit/outbox | Deployed foundation |
+| Commercial | Leads/opportunities/catalog/configuration history, pricing/quote versions, customer identity/linking, buyer/tax/discount governance, READY/SENT | Partial operational journey; documents/sending/acceptance evidence incomplete |
+| Order / Project | Accepted SENT QuoteVersion -> immutable Order snapshot + separate Project in one transaction | Minimal API slice deployed; UI, items/payment/delivery scope, tasks/approvals/change history incomplete |
+| Public intake | Durable per-organization write budget, safe timeout/429, no automatic replay | Deployed; per-client/edge/size controls and idempotency remain open |
+| IAM | Single-statement scoped authorization; active organization/user/membership; no implicit global-role grant | Tested/deployed; production IdP/operator login remains absent |
+| Database role integrity | Composite membership role/tenant FK in migration 0011 | Migrated/deployed; negative-write and rollback proof in PostgreSQL CI |
+| Error / release controls | PII-safe HTTP errors; trusted-main deployment provenance; bounded read-only DB diagnostics; idempotent bootstrap retry | Deployed; retry use in a successful live release was not independently measured |
+| Physical Truth | Existing Drive workbooks mostly templates/unverified drafts | Not measured workshop truth; no source data modified |
+| Manufacturing / cost | Material/production/QC/delivery/actual-cost loop absent | Not operational v1 |
+| Automation / AI | Outbox is persisted, no publisher; no production AI context/tool layer | Later gates after reliable data |
 
-Sprints 0–8: foundation; leads/opportunities/catalog/configuration history; deterministic pricing and quote versions; public inquiry/configurator; customer identity and explicit linking; buyer/tax/discount governance and READY/SENT transitions.
+## Open production gates
+- R02: ingress abuse protections incomplete beyond the shared write budget; idempotency absent.
+- R03/R04: backup restore and external alert delivery are unverified.
+- R05: other cross-tenant relational invariants and broader permission/failure-path tests remain open; the membership slice does not close the whole domain model.
+- R06/R07: privacy lifecycle/legal policy and production identity/operator access incomplete.
+- R11/R13/R17: dependency advisories, shared-package deployment target gap, and demo configurator fallback remain unresolved.
+- R19: intermittent bootstrap connection termination has controlled retry recovery; provider root cause is unproven. No database reset or credential change was performed.
 
-Sprint 9: explicit acceptance of a SENT QuoteVersion; separate quote_acceptances table; one-time Order snapshot and separate Project in one transaction; acceptance/order/project API routes; one happy-path database-backed E2E with sequential replay and audit/event checks. Order starts CONFIRMED; Project starts PLANNING. This is a minimal API slice, not full Gate 4/5 completion.
+## Sequence
+Finish Gate 1/2 controls and functional intake/operator access; complete commercial/Order/Project execution; migrate verified workshop facts; implement materials, production/QC, delivery and actual-cost feedback; prove a real closed-loop v1 job. Then automation, AI and partners.
 
-## Important limits
-- Production internal auth fails closed; admin still sends development headers. No production authenticated operator journey.
-- Sprint 9 admin controls, OrderItems/payment/delivery data and full lifecycle are absent.
-- Project has no tasks, approvals, drawings/change requests or execution UI yet.
-- Public intake has a tested durable organization budget and proxy timeouts (PR30); per-client/edge controls, request-size bounds and idempotency remain open.
-- Tenant isolation is application-heavy; composite FKs are inconsistent and role-to-organization integrity needs hardening.
-- Backup restore, external alerting and secret configuration were not accessible for verification.
-- Quote SENT is not evidence of actual document/email delivery. Customer acceptance evidence flow is incomplete.
-- Physical Truth source files are predominantly templates/unverified drafts, not measured workshop truth.
-- Material/production/QC/delivery/actual-cost loop does not exist yet; pricing margin is estimated, not actual.
-- Outbox worker, production identity, privacy lifecycle and AI context tooling are not implemented.
-
-## Completed first hardening deployment
-PR #29 merged as `d43bb53`; full main CI 36465241308 passed; API deployment 36465461468 and readiness passed; deployed-api tag matches. Raw HTTP exception logging is replaced with allowlisted JSON. Three privacy/error regression tests passed; no migration or business-rule change. See [IMPLEMENTATION_HARDENING_01.md](IMPLEMENTATION_HARDENING_01.md) for limits and verification evidence. Gate 1 remains open.
-
-## Next sequence
-1. Gate 1: PII-safe errors, public abuse controls, recovery proof, alerts, dependency/security/privacy baseline.
-2. Gate 2: production identity, tenant/permission hardening, deployed operator UI and browser smoke.
-3. Complete Gates 3–5: commercial communication/acceptance, full Order, executable Project.
-4. Gates 6–9: verified physical data -> materials -> production/QC -> measured capacity -> delivery -> actual costs/contribution.
-5. Prove a real closed-loop v1 job, then automation, AI and partner capabilities.
-
-DATA TRUTH -> AUTOMATION -> INTELLIGENCE remains the governing principle. GitHub is durable memory; WORK_BOARD tracks active lanes.
-
-## Hardening 02 — release verification (2026-09-29)
-PR #30 merged at `04f697d`, migration 0010 / DD-030. Shared PostgreSQL intake budget + safe 429/503 and web timeout handling. PR CI 36533118415 and main CI 36533385390 passed, including real PostgreSQL concurrency proof (7 of 40 attempts admitted), all tests and build. R02 remains PARTIAL until broader ingress controls are verified. Production ConfiguratorLite fallback was observed again Sep 29; no intake success is claimed.
-
-### 2026-09-29 — deployment provenance hardening
-
-R18 P0 found in workflow_run job predicate: branch name plus CI success did not distinguish PRs from trusted pushes. Hardening 03 adds event and repository checks before the privileged job starts, with ten regression scenarios. PR #31 merged at `7f94a65`; full PR CI 36533882562 passed. Main CI 36534116244 passed; workflow 36534332017 admitted the trusted main push. Untrusted cases remain verified by the predicate regression, not a live exploit. See `IMPLEMENTATION_HARDENING_03.md`.
-
-## Current release truth — 2026-09-29 12:02 UTC
-Main and API tag: d3a8de6; web tag: 04f697d. PR30 migration 0010 applied and API budget is now DEPLOYED. Successful release 36565136322 supersedes two earlier bootstrap connection failures. PR32/33 add bounded, privacy-safe, read-only release diagnostics; all PR/main CI runs passed. Preflight found organization present, two products and no visible lock waits. Original transient connection failure root cause is not established.
-
-PR31 deployment provenance protection is active on main. The rate-budget 429 behavior is proven in real PostgreSQL/HTTP CI, not by a production load test. Broader R02 controls remain open. See IMPLEMENTATION_HARDENING_02/03/04 for exact evidence.
-
-## Hardening 05 in progress
-R05: single-statement active tenant/user/membership authorization with matching role scope, seven PostgreSQL integration cases, and a privacy-safe production integrity count. No migration or IdP change. Local checks passed; CI/release proof pending. See IMPLEMENTATION_HARDENING_05.md.
-
-## Verified IAM slice and next database invariant
-PR34/35 are API-deployed at 56440aa; main CI 36568275366 and release 36568473095 passed. Production readiness 200 and unauthenticated /leads 401 verified again. Role-integrity preflight found zero invalid memberships. Hardening 07 reserves migration 0011 to enforce matching role/membership tenants in PostgreSQL; tests/release pending. R05 remains partial across the wider domain model.
+DATA TRUTH -> AUTOMATION -> INTELLIGENCE. CustomerAccount is not a login identity; Order is commercial truth and Project is execution truth.

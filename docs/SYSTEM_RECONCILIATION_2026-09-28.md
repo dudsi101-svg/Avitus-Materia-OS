@@ -38,7 +38,7 @@ Status is per capability, not per whole module. DEPLOYED is not PRODUCTION VERIF
 | Acquisition | Inquiry/configuration intake | PARTIAL | E2/E3; controllers + proxies + E2E | Public abuse | Edge/per-client controls, size bounds, idempotency | P0 | PR30 adds tested durable budget and safe proxy handling; verify remaining ingress protections |
 | CRM | Lead/Opportunity/customer linking | DEPLOYED | E6; migrations 0001/0004/0007 | Operator cannot use in prod | Authenticated surface | P1 | Gate 2 |
 | Identity | Production user login/session | BLOCKED | E4/E5 | No usable internal access | IdP integration/provisioning/session model | P1 | Select/configure approved identity tenant |
-| IAM | Permission/membership foundation | IMPLEMENTED | modules/iam; seed-dev | Cross-org role assignment not DB constrained | Role matrix; role/org constraint; permission tests | P0 | Validate before enabling internal login |
+| IAM | Membership authorization and role tenant integrity | DEPLOYED | PR34/36; migration 0011; nine IAM tests + migration rollback test; release 36611978132 | Other domain tenant relationships and production identity remain incomplete | Role matrix; broader FK/permission tests; IdP | P0 partial | Continue Gate 1/2 before enabling internal login |
 | Configuration | Versioned catalog configuration | DEPLOYED | E6; migration 0001 | Reference drift downstream | Explicit production version binding | P1 | Gate 4/5 invariant tests |
 | Pricing | Fixed-scale estimate arithmetic | TESTED | pricing tests; E2 | Estimates not actual cost | Verified rates/components | P1 | Calibrate against measured jobs |
 | Quotes | Buyer/tax/discount/READY/SENT | DEPLOYED | PR27; migrations 0008; tests | SENT is a status, not email delivery | PDF, sending/evidence, viewed/rejected/expired/revisions | P1 | Gate 3 completion |
@@ -152,7 +152,7 @@ AI readiness: text drafting with human review is feasible with approved inputs. 
 | R02 | P0 — PARTIAL | PR30 bounds writes with a durable org budget; edge/per-client/size protections still unverified | Engineering | DB concurrency, HTTP 429 and proxy timeout tests passed; complete ingress protections and alert evidence |
 | R03 | P0 | Backup recovery unverified (control-plane access absent) | Operations/owner | Isolated restore, integrity checks, measured RPO/RTO |
 | R04 | P0 | No verified alerting: outage may be reported by customer | Operations | Deliberate staging fault produces alert to approved destination |
-| R05 | P0 before auth rollout | Role tenant and relational isolation incomplete | Engineering | Cross-tenant writes denied by constraints/permissions and tests |
+| R05 | P0 before auth rollout — PARTIAL | Membership role scope enforced by query and composite FK (PR34/36); other domain relational isolation incomplete | Engineering | Membership slice deployed; extend cross-tenant write/permission proof to other aggregates |
 | R06 | P0 before live customer rollout | PII retention/legal policy unresolved | Owner + engineering | Approved policy, implemented retention/export/erasure/legal hold |
 | R07 | P1 | Production operator auth absent | Owner configuration + engineering | Real login/session/RBAC/negative tests + browser smoke |
 | R08 | P1 | Minimal Order/Project cannot run job | Engineering | Items, pinned scope, task/approval/change history |
@@ -253,3 +253,6 @@ This finding supersedes any assumption that successful CI plus branch name alone
 | API release recovery | DEPLOYED | Successful release 36565136322 after two bootstrap failures | R19 P1: original connection termination root cause unknown; retain evidence and correlate provider logs if recurrence |
 
 This checkpoint supersedes previous BLOCKED API rollout notes, without erasing the incident history. No database reset, credential/provider change or session termination was used.
+
+## Membership security checkpoint — 2026-09-29 18:29 UTC
+PR34 authorization read guards and PR36 composite role/membership tenant FK are deployed. Migration 0011, nine PostgreSQL IAM cases and actual-SQL legacy-data rollback test passed CI. Main CI 36611710542 and API release 36611978132 succeeded; deployed-api=18b10a9; preflight invalid_memberships=0. This closes the membership scope gap, not broader R05 or production identity. PR35 provides bounded, PII-safe retry of idempotent bootstrap; provider connection root cause remains unproven.
