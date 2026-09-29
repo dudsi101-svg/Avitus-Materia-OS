@@ -234,3 +234,11 @@ Not needed for this first reversible patch. Later: production identity tenant/ap
 PR #29 merged as `d43bb53351731bce3cc9482dcdb55698c8219c75`. PR CI 36464939159 and main CI 36465241308 passed (including PostgreSQL migration/seed/tests/build). API deploy [36465461468](https://github.com/dudsi101-svg/Avitus-Materia-OS/actions/runs/36465461468) succeeded at 18:31 UTC; readiness passed and deployed-api tag matches the merge. R01 is remediated for the HTTP filter scope: raw exceptions are not serialized; 3 regression tests cover private SQL/cause data, arbitrary thrown values and 503/400 behavior. Other P0s remain open. No live production 500 was deliberately induced; do not interpret this as a full telemetry/alert drill.
 
 R17 was found during additional read-only browser verification: current page is a demo fallback with no submission form. This overrides older documentation claiming a functioning production configurator journey. Resolve runtime catalog/deployment configuration before treating acquisition E2E as production verified. Direct DNS queries were unavailable from the execution resolver; successful HTTPS probes/browser loading establish reachability, not an authoritative DNS-zone audit. No DNS/mail records changed.
+
+## Reconciliation addendum — 2026-09-29 deployment trust
+
+| ID | Priority | Finding | Evidence | Status / next action |
+|---|---|---|---|---|
+| R18 | P0 | Privileged workflow_run deploy admitted successful PR heads named main | deploy-fly.yml at 04f697d; predicate regression fails before fix | Hardening 03 locally tested; require successful same-repository push to main, then verify merged workflow |
+
+This finding supersedes any assumption that successful CI plus branch name alone establishes deployment provenance. No evidence of exploitation was collected.

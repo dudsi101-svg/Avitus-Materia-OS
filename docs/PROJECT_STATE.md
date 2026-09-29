@@ -46,3 +46,7 @@ DATA TRUTH -> AUTOMATION -> INTELLIGENCE remains the governing principle. GitHub
 
 ## Hardening 02 — in progress (2026-09-29)
 Claimed `codex/public-intake-budget`, migration 0010 / DD-030. Shared PostgreSQL intake budget + safe 429/503 and web timeout handling. Local API/web/config tests and typechecks passed; database concurrency proof and deployment remain pending. R02 remains PARTIAL until broader ingress controls are verified. Production ConfiguratorLite fallback was observed again Sep 29; no intake success is claimed.
+
+### 2026-09-29 — deployment provenance hardening
+
+R18 P0 found in workflow_run job predicate: branch name plus CI success did not distinguish PRs from trusted pushes. Hardening 03 adds event and repository checks before the privileged job starts, with ten regression scenarios. Locally tested; CI/merge verification pending. See `IMPLEMENTATION_HARDENING_03.md`.
