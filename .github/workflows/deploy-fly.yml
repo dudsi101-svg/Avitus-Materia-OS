@@ -112,6 +112,18 @@ jobs:
           git tag -f deployed-web HEAD
           git push -f origin refs/tags/deployed-web
 
+      - name: Read-only database preflight
+        if: steps.changes.outputs.deploy_api == 'true'
+        timeout-minutes: 2
+        shell: bash
+        run: |
+          python3 - <<'PYTHON'
+          import os, pathlib, shlex, subprocess
+          source = pathlib.Path('scripts/diagnose-production-db.cjs').read_text()
+          command = 'node -e ' + shlex.quote(source + '\nrun();')
+          subprocess.run(['flyctl', 'ssh', 'console', '-a', os.environ['FLY_API_APP'], '-C', command], check=True, timeout=90)
+          PYTHON
+
       - name: Deploy API
         if: steps.changes.outputs.deploy_api == 'true'
         run: flyctl deploy -c fly.api.toml -a "$FLY_API_APP" --remote-only
