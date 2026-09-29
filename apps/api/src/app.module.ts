@@ -34,7 +34,7 @@ import {
   PostgresCustomerLinkRepository,
   ReadCustomerService,
 } from '@avitus/customers';
-import { createDatabase, PostgresUnitOfWork } from '@avitus/database';
+import { createDatabase, PostgresUnitOfWork, PostgresPublicIntakeBudget } from '@avitus/database';
 import { PostgresAuditStore } from '@avitus/audit';
 import { PostgresDomainEventStore } from '@avitus/events';
 import { PostgresIdentityRepository } from '@avitus/iam';
@@ -75,6 +75,7 @@ import { QuoteGovernanceService } from './quote-governance.service';
 import { QuotesController } from './quotes.controller';
 import { CorrelationMiddleware, DevelopmentAuthGuard } from './request-context';
 import { HttpErrorFilter } from './http-error.filter';
+import { PublicIntakeBudgetService } from './public-intake-budget.service';
 import { TOKENS } from './tokens';
 
 const config = loadServerConfig();
@@ -172,6 +173,10 @@ const readProjectService = new ReadProjectService(orderFlowRepository);
     OrdersController,
   ],
   providers: [
+    {
+      provide: TOKENS.publicIntakeBudget,
+      useValue: new PublicIntakeBudgetService(new PostgresPublicIntakeBudget(connection.pool), config.PUBLIC_INTAKE_MAX_PER_MINUTE),
+    },
     { provide: TOKENS.config, useValue: config },
     { provide: TOKENS.database, useValue: connection.db },
     { provide: TOKENS.pool, useValue: connection.pool },

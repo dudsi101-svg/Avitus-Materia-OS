@@ -18,3 +18,6 @@ Sprint 9 is merged and API-deployed, not merely planned. Internal production aut
 
 ## Real access / owner dependencies
 Identity provider application configuration; Fly backup/restore and alert access; approved alert recipients; verified workshop facts; legal retention/payment/acceptance policy. Do not ask for secrets in chat. Continue independent safe engineering while these are pending.
+
+## Active lane 2026-09-29
+Finish Hardening 02 (`codex/public-intake-budget`): migration 0010, durable shared budget for both public writes, web timeout/429 handling. Run real PostgreSQL CI before merge and release. Then verify deployed API and web behavior; do not consume production budget with load tests or create fake customer records.

@@ -5,6 +5,7 @@ import type { ServerConfig } from '@avitus/config';
 import { publicWebContext } from './public-web-credential';
 import { PublicRoute, type AvitusRequest } from './request-context';
 import { TOKENS } from './tokens';
+import type { PublicIntakeBudgetService } from './public-intake-budget.service';
 
 @Controller('public/configurator')
 export class PublicConfiguratorController {
@@ -13,6 +14,7 @@ export class PublicConfiguratorController {
     @Inject(TOKENS.readPublicCatalogService) private readonly catalog: ReadPublicCatalogService,
     @Inject(TOKENS.createPublicConfigurationRequestService)
     private readonly createRequest: CreatePublicConfigurationRequestService,
+    @Inject(TOKENS.publicIntakeBudget) private readonly intakeBudget: PublicIntakeBudgetService,
   ) {}
 
   @PublicRoute()
@@ -28,6 +30,7 @@ export class PublicConfiguratorController {
     const context = publicWebContext(this.config, request, [
       'acquisition.public_configuration_request.create',
     ]);
+    await this.intakeBudget.consume(context.organizationId);
     const result = await this.createRequest.execute(body, context);
     return {
       ok: true,

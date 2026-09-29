@@ -5,6 +5,7 @@ export const TOKENS = {
   identityRepository: Symbol('identityRepository'),
   leadRepository: Symbol('leadRepository'),
   publicInquiryRepository: Symbol('publicInquiryRepository'),
+  publicIntakeBudget: Symbol('publicIntakeBudget'),
   opportunityRepository: Symbol('opportunityRepository'),
   productRepository: Symbol('productRepository'),
   configurationRepository: Symbol('configurationRepository'),

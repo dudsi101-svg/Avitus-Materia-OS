@@ -9,7 +9,7 @@ _Last updated: 2026-09-28_
 
 | Lane | Owner | Branch | PR | Touches | Status |
 |---|---|---|---|---|---|
-| — | — | — | — | — | No active claim; next lane must claim before implementation |
+| Public intake durable budget + proxy failure handling | Codex | `codex/public-intake-budget` | pending | database 0010, config, API controllers/composition/filter, web proxies, tests, docs | Claimed 2026-09-29; migration 0010 and DD-030 reserved |
 
 ## Reservations
 
@@ -28,7 +28,8 @@ Take the next free value, write your lane next to it, commit together with your 
 | 0007 | Sprint 6 configuration request conversions | merged |
 | 0008 | Sprint 8 Quote governance | merged (PR #27) |
 | **0009** | **Sprint 9 Accepted Quote → Order + Project** | **merged (PR #28); deployed API run 78** |
-| 0010 | _next free_ | — |
+| 0010 | Public intake durable budget | reserved |
+| 0011 | _next free_ | — |
 
 ### Decision IDs (`docs/DECISIONS.md`)
 | ID | Subject | State |
@@ -41,7 +42,8 @@ Take the next free value, write your lane next to it, commit together with your 
 | DD-027 | Conversion of public configuration requests is explicit, atomic and one-time | merged |
 | DD-028 | QuoteVersion is the immutable customer-ready commercial snapshot | merged |
 | **DD-029** | **Accepted QuoteVersion is the commercial source for Order; Project is separate execution** | **merged (PR #28); deployed API run 78** |
-| DD-030 | _next free_ | — |
+| DD-030 | Public intake shared durable budget | reserved |
+| DD-031 | _next free_ | — |
 
 ### Sprint numbers
 | Sprint | Subject | State |

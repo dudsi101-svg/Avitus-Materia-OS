@@ -9,6 +9,7 @@ const serverSchema = z.object({
   ADMIN_ORIGIN: z.string().url().default('http://localhost:3000'),
   PUBLIC_INQUIRY_ORGANIZATION_ID: z.string().uuid().optional(),
   PUBLIC_INQUIRY_API_KEY: z.string().min(24).optional(),
+  PUBLIC_INTAKE_MAX_PER_MINUTE: z.coerce.number().int().min(1).max(10000).default(60),
 });
 
 export type ServerConfig = z.infer<typeof serverSchema>;
