@@ -9,7 +9,7 @@ _Last updated: 2026-09-29_
 
 | Lane | Owner | Branch | PR | Touches | Status |
 |---|---|---|---|---|---|
-| — | — | — | — | — | No active implementation claim; release verification complete |
+| Tenant membership authorization | Codex | `codex/tenant-role-integrity` | pending | IAM repository/tests, read-only preflight, docs | Claimed 2026-09-29; no migration or identifier reservation |
 
 ## Reservations
 

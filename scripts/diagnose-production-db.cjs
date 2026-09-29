@@ -4,10 +4,11 @@ const checks = [
   ['server', "SELECT pg_is_in_recovery() AS recovery, current_setting('transaction_read_only') = 'on' AS read_only", []],
   ['organization', 'SELECT EXISTS (SELECT 1 FROM organizations WHERE id = $1) AS present', ['organization']],
   ['catalog', 'SELECT count(*)::int AS products FROM products WHERE organization_id = $1', ['organization']],
+  ['role_integrity', 'SELECT count(*)::int AS invalid_memberships FROM organization_users m JOIN roles r ON r.id = m.role_id WHERE r.organization_id IS DISTINCT FROM m.organization_id', []],
   ['activity', "SELECT count(*) FILTER (WHERE state = 'active')::int AS active, count(*) FILTER (WHERE state = 'idle in transaction')::int AS idle_transaction, count(*) FILTER (WHERE wait_event_type = 'Lock')::int AS waiting_lock FROM pg_stat_activity WHERE datname = current_database()", []],
   ['locks', "SELECT count(*) FILTER (WHERE NOT granted)::int AS waiting, count(*) FILTER (WHERE granted AND mode = 'AccessExclusiveLock')::int AS exclusive FROM pg_locks WHERE database = (SELECT oid FROM pg_database WHERE datname = current_database())", []],
 ];
-const fields = new Set(['recovery', 'read_only', 'present', 'products', 'active', 'idle_transaction', 'waiting_lock', 'waiting', 'exclusive']);
+const fields = new Set(['recovery', 'read_only', 'present', 'products', 'active', 'idle_transaction', 'waiting_lock', 'waiting', 'exclusive', 'invalid_memberships']);
 function safeCode(error) {
   return typeof error?.code === 'string' && /^(?:[0-9A-Z]{5}|ECONNRESET|ECONNREFUSED|ETIMEDOUT)$/.test(error.code) ? error.code : 'UNCLASSIFIED';
 }

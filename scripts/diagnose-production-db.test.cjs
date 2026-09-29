@@ -23,7 +23,7 @@ test('diagnostics are read-only, bounded and output only numeric/boolean allowli
   assert.equal(f.queries.at(-1), 'ROLLBACK');
   assert.equal(f.queries[1], "SET LOCAL statement_timeout = '5s'");
   assert.ok(f.queries.slice(2, -1).every(q => q.startsWith('SELECT')));
-  assert.equal(records.length, 5); assert.ok(f.ended());
+  assert.equal(records.length, 6); assert.ok(f.ended());
   assert.doesNotMatch(JSON.stringify(records), /private|secret-url|22222222|email/);
 });
 test('errors expose only a safe code and always close the connection', async () => {
