@@ -9,10 +9,7 @@ _Last updated: 2026-09-29_
 
 | Lane | Owner | Branch | PR | Touches | Status |
 |---|---|---|---|---|---|
-| Public intake durable budget + proxy failure handling | Codex | `codex/public-intake-budget` | #30 | database 0010, config, API controllers/composition/filter, web proxies, tests, docs | BLOCKED: migration applied; API bootstrap connection fails in two release runs |
-| Deployment trust boundary | Codex | `codex/deployment-trust-boundary` | #31 | CI/deploy workflows, regression guard, docs | Merged; main CI passed; trusted push admitted; PR30 API retry failed independently |
-
-| Read-only production database diagnostics | Codex | `codex/database-preflight-compatibility` | #32 + follow-up | trusted deployment preflight, bounded diagnostic script/tests, docs | PR32 merged; preflight hit startup protocol error; correcting timeout compatibility before retry |
+| — | — | — | — | — | No active implementation claim; release verification complete |
 
 ## Reservations
 
@@ -31,7 +28,7 @@ Take the next free value, write your lane next to it, commit together with your 
 | 0007 | Sprint 6 configuration request conversions | merged |
 | 0008 | Sprint 8 Quote governance | merged (PR #27) |
 | **0009** | **Sprint 9 Accepted Quote → Order + Project** | **merged (PR #28); deployed API run 78** |
-| 0010 | Public intake durable budget | merged (PR #30) |
+| 0010 | Public intake durable budget | merged (PR #30); applied in production, API release 36565136322 |
 | 0011 | _next free_ | — |
 
 ### Decision IDs (`docs/DECISIONS.md`)
@@ -98,3 +95,6 @@ Sprint 9 merged as PR #28 at `68ea544`; CI run 36449482063 succeeded; API deploy
 
 ## Hardening reconciliation completed
 PR #29 merged at `d43bb53`; PR CI 36464939159, main CI 36465241308 and API deploy 36465461468 succeeded. No migration. HTTP error serialization is allowlisted; Gate 1 remains open. Browser found ConfiguratorLite fallback on production (R17), not verified working intake. At that checkpoint no active implementation claim remained; current lanes are listed above.
+
+## 2026-09-29 hardening release checkpoint
+PR30 intake budget: deployed API d3a8de6 and web 04f697d; migration 0010 applied; full CI passed. PR31 privileged deployment provenance protection active. PR32/33 bounded read-only database diagnostics verified in production. Release 36565136322 succeeded after earlier bootstrap connection failures; root cause remains unproven. See Hardening 02–04. Gate 1 remains open; next P0 is tenant invariants plus recovery/alert proof.

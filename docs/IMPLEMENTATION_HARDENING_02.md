@@ -46,3 +46,10 @@ Independent safe checks after web deployment: /kreator 200 but demo fallback/no 
 
 ## Verified checkpoint 2026-09-29
 Retry 36534332017 also failed in organization bootstrap with the same connection termination. Migration 0010 is applied; API rollout remains BLOCKED. Tags independently read: deployed-web = 04f697d; deployed-api = d43bb53. Readiness remains 200 and unauthenticated /leads 401. The budget is TESTED / MERGED / MIGRATED, not API DEPLOYED or PRODUCTION VERIFIED. Diagnose the production database before further identical retries.
+
+## Recovery verified — 2026-09-29 12:02 UTC
+Trusted-main deployment 36565136322 succeeded after bounded database preflight. Fly API release and readiness passed, and deployed-api now points to d3a8de658c2dcd595ac84f4d99875b865b25129b, containing PR30. Web tag remains 04f697d. Status: TESTED / MERGED / MIGRATED / DEPLOYED; production availability smoke verified. The live 429 path was deliberately not load-tested against real intake; its behavioral proof remains PostgreSQL/HTTP CI. R02 remains PARTIAL for edge/per-client/size/idempotency controls.
+
+The earlier bootstrap connection failures did not recur; exact provider/root cause is unproven. No database reset, session termination, credential change or provider reconfiguration was performed.
+
+Independent post-release HTTP smoke: API /ready 200, unauthenticated /leads 401, empty web inquiry 400. /kreator remains 200 with ConfiguratorLite demo and no form; R17 remains open despite two catalog products existing in the database. No production customer record was created.

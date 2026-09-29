@@ -1,6 +1,6 @@
 # Next Action
 
-Updated 2026-09-29 after reconciliation and hardening PRs #29–#31.
+Updated 2026-09-29 after reconciliation and hardening PRs #29–#33.
 Read WORK_BOARD and COORDINATION before claiming a lane.
 
 ## Current position
@@ -22,4 +22,4 @@ Identity provider application configuration; Fly backup/restore and alert access
 ## Handoff 2026-09-29
 Hardening 02: PR30 merged, migration 0010 / DD-030; real PostgreSQL concurrency tests and full CI passed. Hardening 03: PR31 merged; privileged deployment now requires successful same-repository push CI on main. See the implementation documents for final release evidence.
 
-Immediate priority: diagnose repeated production bootstrap connection termination (release runs 36533542370 and 36534332017). Migration 0010 succeeded; API budget is not deployed. Use bounded read-only diagnostics, retain the current API, and do not blindly repeat deployment. Then tenant role/FK preflight and negative tests (R05), or dependency-compatible advisory repairs. Keep deployment target coverage R13 and configurator observability R17 visible. Do not claim Gate 1 complete or move to autonomous pricing/capacity.
+Release recovered: run 36565136322 deployed API d3a8de6 after successful read-only diagnostics. PR30 budget is deployed; migration 0010 applied. Original connection failure cause remains unproven (R19). Next safe P0 slice: tenant role/FK preflight and negative tests (R05), alongside obtaining actual recovery/alert evidence. Do not reset the database or invent a cause for the transient release failures. Keep deployment target coverage R13 and configurator observability R17 visible. Do not claim Gate 1 complete or move to autonomous pricing/capacity.

@@ -242,3 +242,14 @@ R17 was found during additional read-only browser verification: current page is 
 | R18 | P0 | Privileged workflow_run deploy admitted successful PR heads named main | deploy-fly.yml at 04f697d; predicate regression fails before fix | PR31 merged 7f94a65; ten regression scenarios + PR/main CI passed; workflow 36534332017 starts for trusted main push. R18 predicate fixed; no exploit attempted |
 
 This finding supersedes any assumption that successful CI plus branch name alone establishes deployment provenance. No evidence of exploitation was collected.
+
+## Verified hardening checkpoint — 2026-09-29 12:02 UTC
+
+| Capability | Status | Evidence | Remaining risk / action |
+|---|---|---|---|
+| Shared durable public intake budget; safe web timeout/429 | DEPLOYED | PR30, migration 0010, real PostgreSQL concurrency + HTTP CI; API deploy 36565136322, tag d3a8de6; web tag 04f697d | R02 PARTIAL: edge/per-client/size/idempotency; live rate-load test not performed |
+| Privileged deployment provenance | TESTED / active on main | PR31; ten predicate cases; trusted push deployments | R18 predicate fixed; broader action/token hardening separate |
+| Bounded read-only database preflight | PRODUCTION VERIFIED | PR32/33; run 36565136322: org present, 2 products, no visible lock waits | Point-in-time, role-limited visibility; not monitoring or restore proof |
+| API release recovery | DEPLOYED | Successful release 36565136322 after two bootstrap failures | R19 P1: original connection termination root cause unknown; retain evidence and correlate provider logs if recurrence |
+
+This checkpoint supersedes previous BLOCKED API rollout notes, without erasing the incident history. No database reset, credential/provider change or session termination was used.

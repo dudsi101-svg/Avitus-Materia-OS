@@ -17,3 +17,10 @@ PR #32 merged as f264943e56eb7b5cf55322ffa3fb43cada004ca5. PR CI 36563933592 pas
 
 ### Pooler compatibility correction
 The first diagnostic supplied statement_timeout in the PostgreSQL startup packet. PgBouncer may reject untracked startup parameters (https://www.pgbouncer.org/config#ignore_startup_parameters); 08P01 is consistent with this, but does not prove the original bootstrap failure cause. Move the timeout to SET LOCAL inside BEGIN READ ONLY, retaining client/process deadlines. Tests require the local timeout and prohibit the startup parameter. No provider settings are changed.
+
+PR #33 compatibility correction merged as d3a8de658c2dcd595ac84f4d99875b865b25129b after full PR CI 36564643971 passed. The diagnostic requires no additional owner credentials: Fly SSH access was verified by run 36564411891. Original bootstrap root cause remains unresolved until corrected live checks run.
+
+## Live outcome
+Main CI 36564958790 passed; deploy run 36565136322 succeeded. At 11:59 UTC, preflight reported recovery=false, transaction read_only=true, configured organization present, 2 catalog products, 0 visible idle transactions, 0 visible lock waits and 0 exclusive locks. Checks took 2–5 ms each. Counts are a point-in-time observation with database-role visibility limits, not proof of historical absence of locks. API release then succeeded, readiness passed and deployed-api moved to d3a8de6 at approximately 12:02 UTC.
+
+The diagnostic startup compatibility issue is resolved. Original bootstrap connection termination was not reproduced and its root cause remains unknown (R19). Keep bounded preflight for existing production deployments; do not claim this added monitoring/alert routing or a backup restore test.
