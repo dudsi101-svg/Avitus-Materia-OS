@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
+import { forwardPublicIntake } from '../../../lib/public-intake-proxy';
 
 const inquirySchema = z.object({
   name: z.string().trim().min(2).max(120),
@@ -16,29 +17,5 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: 'Sprawdź dane formularza i spróbuj ponownie.' }, { status: 400 });
   }
 
-  const apiUrl = process.env.AVITUS_API_URL;
-  const apiKey = process.env.PUBLIC_INQUIRY_API_KEY;
-  if (!apiUrl || !apiKey) {
-    return NextResponse.json(
-      { message: 'Formularz nie jest jeszcze podłączony do środowiska produkcyjnego.' },
-      { status: 503 },
-    );
-  }
-
-  const response = await fetch(`${apiUrl.replace(/\/$/, '')}/public/inquiries`, {
-    method: 'POST',
-    headers: {
-      'content-type': 'application/json',
-      'x-avitus-public-inquiry-key': apiKey,
-      'x-correlation-id': crypto.randomUUID(),
-    },
-    body: JSON.stringify(parsed.data),
-    cache: 'no-store',
-  });
-
-  if (!response.ok) {
-    return NextResponse.json({ message: 'Nie udało się zapisać zapytania. Spróbuj ponownie za chwilę.' }, { status: 502 });
-  }
-
-  return NextResponse.json({ ok: true }, { status: 201 });
+  return forwardPublicIntake('/public/inquiries', parsed.data);
 }

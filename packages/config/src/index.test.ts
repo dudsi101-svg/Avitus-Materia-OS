@@ -20,4 +20,12 @@ describe('loadServerConfig API_LISTEN_HOST', () => {
   it('rejects unsupported listen hosts', () => {
     expect(() => loadServerConfig({ ...baseEnv, API_LISTEN_HOST: '127.0.0.1' })).toThrow();
   });
+
+  it('requires a positive bounded intake budget', () => {
+    expect(loadServerConfig(baseEnv).PUBLIC_INTAKE_MAX_PER_MINUTE).toBe(60);
+    expect(loadServerConfig({ ...baseEnv, PUBLIC_INTAKE_MAX_PER_MINUTE: '120' }).PUBLIC_INTAKE_MAX_PER_MINUTE).toBe(120);
+    for (const value of ['0', '-1', '1.5', '10001', 'invalid']) {
+      expect(() => loadServerConfig({ ...baseEnv, PUBLIC_INTAKE_MAX_PER_MINUTE: value })).toThrow();
+    }
+  });
 });

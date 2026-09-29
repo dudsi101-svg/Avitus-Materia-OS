@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
+import { forwardPublicIntake } from '../../../lib/public-intake-proxy';
 
 const requestSchema = z.object({
   productId: z.string().uuid(),
@@ -20,40 +21,5 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: 'Sprawdź dane i spróbuj ponownie.' }, { status: 400 });
   }
 
-  const apiUrl = process.env.AVITUS_API_URL;
-  const apiKey = process.env.PUBLIC_INQUIRY_API_KEY;
-  if (!apiUrl || !apiKey) {
-    return NextResponse.json(
-      { message: 'Kreator nie jest jeszcze podłączony do systemu.' },
-      { status: 503 },
-    );
-  }
-
-  const response = await fetch(`${apiUrl.replace(/\/$/, '')}/public/configurator/requests`, {
-    method: 'POST',
-    headers: {
-      'content-type': 'application/json',
-      'x-avitus-public-inquiry-key': apiKey,
-      'x-correlation-id': crypto.randomUUID(),
-    },
-    body: JSON.stringify(parsed.data),
-    cache: 'no-store',
-  });
-
-  if (response.status === 400) {
-    return NextResponse.json(
-      {
-        message: 'Ta konfiguracja wykracza poza dostępne opcje. Zmień wartości i spróbuj ponownie.',
-      },
-      { status: 400 },
-    );
-  }
-  if (!response.ok) {
-    return NextResponse.json(
-      { message: 'Nie udało się zapisać konfiguracji. Spróbuj ponownie za chwilę.' },
-      { status: 502 },
-    );
-  }
-  const body = (await response.json()) as { reference?: string };
-  return NextResponse.json({ ok: true, reference: body.reference }, { status: 201 });
+  return forwardPublicIntake('/public/configurator/requests', parsed.data);
 }

@@ -3,6 +3,7 @@ import type { Response } from 'express';
 import { isDomainError } from '@avitus/shared';
 import { ZodError } from 'zod';
 import type { AvitusRequest } from './request-context';
+import { PublicIntakeLimitException } from './public-intake-budget.service';
 
 @Catch()
 export class HttpErrorFilter implements ExceptionFilter {
@@ -36,6 +37,9 @@ export class HttpErrorFilter implements ExceptionFilter {
     }
 
     if (exception instanceof HttpException) {
+      if (exception instanceof PublicIntakeLimitException) {
+        response.setHeader('Retry-After', String(exception.retryAfterSeconds));
+      }
       if (exception.getStatus() >= 500) {
         this.logServerFailure(correlationId, exception.getStatus());
       }

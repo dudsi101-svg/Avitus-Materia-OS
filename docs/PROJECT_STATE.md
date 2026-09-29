@@ -43,3 +43,6 @@ PR #29 merged as `d43bb53`; full main CI 36465241308 passed; API deployment 3646
 5. Prove a real closed-loop v1 job, then automation, AI and partner capabilities.
 
 DATA TRUTH -> AUTOMATION -> INTELLIGENCE remains the governing principle. GitHub is durable memory; WORK_BOARD tracks active lanes.
+
+## Hardening 02 — in progress (2026-09-29)
+Claimed `codex/public-intake-budget`, migration 0010 / DD-030. Shared PostgreSQL intake budget + safe 429/503 and web timeout handling. Local API/web/config tests and typechecks passed; database concurrency proof and deployment remain pending. R02 remains PARTIAL until broader ingress controls are verified. Production ConfiguratorLite fallback was observed again Sep 29; no intake success is claimed.

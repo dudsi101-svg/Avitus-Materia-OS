@@ -188,6 +188,15 @@ The first Project state is planning-oriented and does not contain an invented pr
 
 Details: `docs/IMPLEMENTATION_SPRINT_9.md`.
 
+## DD-030 — Public intake uses a shared durable safety budget
+**Status:** Accepted technical implementation (Hardening 02, 2026-09-29)
+
+Both authenticated public write endpoints consume one shared per-organization budget before business writes. The organization comes only from existing server-side credential configuration. PostgreSQL atomically checks and consumes capacity in a fixed 60-second window, across API instances; rejected attempts do not grow storage. Default 60 attempts/minute is configurable with PUBLIC_INTAKE_MAX_PER_MINUTE (1–10000). Invalid business input after successful credential validation also consumes capacity; failed credentials and catalog reads do not.
+
+Store only organization ID, window timestamp and count. Do not collect client IP/PII or trust user-supplied forwarded headers. A store failure returns 503 (fail closed); exhaustion returns 429 with conservative Retry-After: 60. Web proxies preserve that response, bound upstream waiting to 8 seconds and never automatically retry an ambiguous write.
+
+This is a durable CRM-write safety ceiling, not per-client fairness or DDoS/WAF protection. A malicious sender can exhaust the shared budget and delay legitimate submissions until renewal. Per-client trusted-edge limits, body-size controls, idempotency and denial telemetry remain separate work. No new paid service or provider is introduced. No automatic customer merge or commercial-rule change.
+
 ## Open decisions for Technical Architecture v0.4
 - Authentication provider
 - Object storage provider

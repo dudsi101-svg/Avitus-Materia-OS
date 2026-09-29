@@ -12,6 +12,7 @@ export * from './schema';
 export * from './acquisition-schema';
 export * from './customer-schema';
 export * from './order-schema';
+export { PostgresPublicIntakeBudget, type PublicIntakeBudget } from './public-intake-budget';
 export { STARTER_CATALOG, ensureStarterCatalog, starterId } from './starter-catalog';
 
 export type Database = NodePgDatabase<typeof schema>;
