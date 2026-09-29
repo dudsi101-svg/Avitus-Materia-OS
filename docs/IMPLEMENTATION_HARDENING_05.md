@@ -19,3 +19,8 @@ Seven PostgreSQL integration cases: valid scoped permissions; wrong tenant/missi
 No composite FK is introduced yet; invalid data can still be written by a faulty writer but cannot authorize access through this repository. R05 remains PARTIAL until database invariants and broader cross-tenant entity/permission tests are complete. Existing requests already authorized before suspension are not retroactively cancelled; this is a statement-consistent authorization check, not transaction-wide revocation.
 
 Production auth remains external/fail-closed; this does not implement an IdP or operator login. Do not restore the unsafe authorization query as a workaround for invalid memberships. Investigate preflight results and repair data only with explicit evidence; no automatic role reassignment.
+
+## CI / merge evidence
+PR #34 merged as 5952d05b36d00e3a2cc836d5ecbbf38ad3488004. PR CI 36566764163 passed migrations/seed/lint/typecheck/tests/build. All seven IAM integration tests executed against PostgreSQL and passed (711 ms); no local database run is claimed. Main CI and production release evidence pending.
+
+Main CI 36567038451 passed. Deployment 36567266889 preflight reported invalid_memberships=0, but API release failed in the existing bootstrap with connection termination; IAM code is not yet deployed. No migration was attempted. Stabilize bootstrap before marking this slice DEPLOYED.

@@ -1,3 +1,4 @@
+import { runBootstrapWithRetry } from './bootstrap-retry';
 import { eq } from 'drizzle-orm';
 import { createDatabase, organizations } from './index';
 import { ensureStarterCatalog } from './starter-catalog';
@@ -39,16 +40,16 @@ async function bootstrap(): Promise<void> {
       throw new Error('PUBLIC_INQUIRY_ORGANIZATION_ID already belongs to a different organization.');
     }
 
-    console.log(`Production organization ready: ${organization.name} (${organization.id}).`);
+    console.log(JSON.stringify({ event: 'bootstrap.organization_ready' }));
 
     await ensureStarterCatalog(db, organization.id);
-    console.log('Starter public catalog ready.');
+    console.log(JSON.stringify({ event: 'bootstrap.catalog_ready' }));
   } finally {
     await pool.end();
   }
 }
 
-bootstrap().catch((error) => {
-  console.error(error);
-  process.exit(1);
-});
+// Each retry recreates and closes its own pool. Existing bootstrap writes are idempotent.
+runBootstrapWithRetry(bootstrap, (record) => console.error(JSON.stringify(record)))
+  .then((attempts) => console.log(JSON.stringify({ event: 'bootstrap.completed', attempts })))
+  .catch(() => { process.exitCode = 1; });
