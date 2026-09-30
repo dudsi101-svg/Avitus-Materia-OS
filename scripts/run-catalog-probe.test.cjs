@@ -45,3 +45,17 @@ test('remote timeout classification hides raw CLI error', () => {
   assert.equal(records[0].reason, 'remote_timeout');
   assert.doesNotMatch(JSON.stringify(records), /private/);
 });
+
+test('one unavailable guest does not hide evidence from the remaining guest', () => {
+  const records = []; let attempts = 0;
+  const passed = runProbe('avitus-materia-web', '', (_, args) => {
+    if (args[0] === 'secrets') return JSON.stringify([{ name: 'AVITUS_API_URL' }, { name: 'PUBLIC_INQUIRY_API_KEY' }]);
+    if (args[1] === 'list') return JSON.stringify([{ id: 'abc', state: 'started' }, { id: 'def', state: 'started' }]);
+    attempts++;
+    if (args[2] === 'abc') throw Object.assign(Error('private'), { code: 'ETIMEDOUT' });
+    return JSON.stringify({ stdout: page });
+  }, r => records.push(r));
+  assert.equal(passed, false); assert.equal(attempts, 2);
+  assert.equal(records.at(-1).event, 'catalog.page');
+  assert.equal(records.at(-1).machine, 2);
+});
