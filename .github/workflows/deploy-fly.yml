@@ -151,12 +151,5 @@ jobs:
         run: echo "No deployable application changes detected."
 
       - name: Verify configurator capability
-        timeout-minutes: 2
-        shell: bash
-        run: |
-          python3 - <<'PYTHON'
-          import os, pathlib, shlex, subprocess
-          source = pathlib.Path('scripts/verify-catalog-capability.cjs').read_text()
-          command = 'node -e ' + shlex.quote(source + '\nrun();')
-          subprocess.run(['flyctl', 'ssh', 'console', '-a', os.environ['FLY_WEB_APP'], '-C', command], check=True, timeout=60)
-          PYTHON
+        timeout-minutes: 4
+        run: node scripts/run-catalog-probe.cjs

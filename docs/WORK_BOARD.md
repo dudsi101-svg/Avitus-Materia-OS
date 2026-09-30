@@ -3,13 +3,13 @@
 Protocol: `docs/COORDINATION.md`. Update this file whenever you start, hand off or finish a lane.
 PRs on GitHub are the tie-breaker if this board is stale.
 
-_Last updated: 2026-09-29_
+_Last updated: 2026-09-30_
 
 ## Active lanes
 
 | Lane | Owner | Branch | PR | Touches | Status |
 |---|---|---|---|---|---|
-| Configurator runtime diagnosis | Codex | `codex/configurator-runtime-diagnosis` | pending | read-only capability probe, deployment workflow/tests, docs | Claimed 2026-09-29; no schema/data/credential change |
+| Configurator runtime diagnosis | Codex | `codex/catalog-machine-exec` | follow-up to #37 | read-only capability probe, deployment workflow/tests, docs | Claimed 2026-09-30; replace timed-out SSH transport with read-only Machines exec; no schema/data/credential change |
 
 ## Reservations
 
