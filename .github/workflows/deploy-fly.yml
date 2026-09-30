@@ -151,5 +151,5 @@ jobs:
         run: echo "No deployable application changes detected."
 
       - name: Verify configurator capability
-        timeout-minutes: 4
+        timeout-minutes: 5
         run: node scripts/run-catalog-probe.cjs

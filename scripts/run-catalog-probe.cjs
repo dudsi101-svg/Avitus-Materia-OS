@@ -16,6 +16,20 @@ function runProbe(app, source, execute = execFileSync, emit = record => console.
     const started = machines.filter(machine => machine.state === 'started');
     if (!started.length || started.length > 4 || started.some(m => !/^[a-f0-9]+$/.test(m.id))) throw Error('unexpected machines');
     emit({ event: 'catalog.machines', started: started.length });
+    stage = 'secret_names';
+    const secrets = call(['secrets', 'list', '-a', app, '--json']);
+    if (!Array.isArray(secrets) || secrets.some(s => typeof s.name !== 'string')) throw Error('unexpected secrets');
+    const secretPresent = name => secrets.some(s => s.name === name);
+    let missingConfig = false;
+    for (const [index, machine] of started.entries()) {
+      const env = machine.config?.env || {};
+      const urlPresent = Boolean(env.AVITUS_API_URL) || secretPresent('AVITUS_API_URL');
+      const keyPresent = Boolean(env.PUBLIC_INQUIRY_API_KEY) || secretPresent('PUBLIC_INQUIRY_API_KEY');
+      emit({ event: 'catalog.config_inventory', machine: index + 1, api_url_present: urlPresent, api_key_present: keyPresent,
+        api_url_secret_present: secretPresent('AVITUS_API_URL'), api_key_secret_present: secretPresent('PUBLIC_INQUIRY_API_KEY') });
+      missingConfig ||= !urlPresent || !keyPresent;
+    }
+    if (missingConfig) return false;
     let passed = true;
     const command = 'node -e ' + "'" + (source + '\nrun();').replaceAll("'", "'\\''") + "'";
     for (const [index, machine] of started.entries()) {
@@ -36,8 +50,13 @@ function runProbe(app, source, execute = execFileSync, emit = record => console.
       passed = passed && (result.exit_code === undefined || result.exit_code === 0) && !result.stderr && pagePassed;
     }
     return passed;
-  } catch {
-    emit({ event: 'catalog.transport_failure', stage });
+  } catch (error) {
+    const raw = String(error?.stderr || '');
+    const reason = error?.code === 'ETIMEDOUT' ? 'local_timeout'
+      : /timed out|timeout|deadline exceeded/i.test(raw) ? 'remote_timeout'
+      : /unauthorized|forbidden|\b401\b|\b403\b/i.test(raw) ? 'access_denied'
+      : error instanceof SyntaxError ? 'invalid_json' : 'unclassified';
+    emit({ event: 'catalog.transport_failure', stage, reason });
     return false;
   }
 }
