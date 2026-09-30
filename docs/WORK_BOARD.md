@@ -9,7 +9,7 @@ _Last updated: 2026-09-30_
 
 | Lane | Owner | Branch | PR | Touches | Status |
 |---|---|---|---|---|---|
-| Configurator runtime diagnosis | Codex | `codex/catalog-transport-evidence` | follow-up to #38 | read-only capability probe, deployment workflow/tests, docs | Claimed 2026-09-30; read-only secret-name/config presence inventory after both exec transports failed; no schema/data/credential change |
+| Configurator runtime diagnosis | Codex | `codex/catalog-runtime-observability` | follow-up to #39 | read-only capability probe, deployment workflow/tests, docs | Claimed 2026-09-30; safe application catalog telemetry and external capability verification; guest access times out; no schema/data/credential change |
 
 ## Reservations
 
