@@ -3,13 +3,13 @@
 Protocol: `docs/COORDINATION.md`. Update this file whenever you start, hand off or finish a lane.
 PRs on GitHub are the tie-breaker if this board is stale.
 
-_Last updated: 2026-09-30_
+_Last updated: 2026-10-01_
 
 ## Active lanes
 
 | Lane | Owner | Branch | PR | Touches | Status |
 |---|---|---|---|---|---|
-| Configurator runtime diagnosis | Codex | `codex/catalog-runtime-observability` | follow-up to #39 | read-only capability probe, deployment workflow/tests, docs | Claimed 2026-09-30; safe application catalog telemetry and external capability verification; guest access times out; no schema/data/credential change |
+| Configurator runtime diagnosis | Codex | `codex/catalog-private-route` | follow-up to #40 | read-only capability probe, deployment workflow/tests, docs | Claimed 2026-10-01; restore documented private API route after fly_public TIMEOUT; preserve key; bounded ISR verification |
 
 ## Reservations
 
