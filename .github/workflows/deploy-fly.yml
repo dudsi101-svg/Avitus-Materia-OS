@@ -86,6 +86,11 @@ jobs:
             exit 1
           fi
 
+      - name: Stage declared web API location
+        if: steps.changes.outputs.deploy_web == 'true'
+        timeout-minutes: 2
+        run: python3 scripts/stage_web_api_url.py
+
       - name: Deploy web
         if: steps.changes.outputs.deploy_web == 'true'
         run: flyctl deploy -c fly.web.toml -a "$FLY_WEB_APP" --remote-only
@@ -151,5 +156,5 @@ jobs:
         run: echo "No deployable application changes detected."
 
       - name: Verify configurator capability
-        timeout-minutes: 2
+        timeout-minutes: 8
         run: node scripts/verify-public-configurator.cjs

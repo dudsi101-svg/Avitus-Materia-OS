@@ -6,6 +6,7 @@ primary_region = "fra"
 
 [env]
   NODE_ENV = "production"
+  AVITUS_API_URL = "http://avitus-materia-api.internal:4000"
   PORT = "3001"
   NEXT_TELEMETRY_DISABLED = "1"
 

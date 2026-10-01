@@ -28,16 +28,29 @@ function safeCatalogLogs(raw) {
   }
   return records.slice(-20);
 }
-module.exports = { verifyPage, safeCatalogLogs };
+async function verifyWithRefresh(fetcher, emit, now = Date.now, pause = ms => new Promise(resolve => setTimeout(resolve, ms)), budgetMs = 330000) {
+  // A build-time fallback can remain in Next ISR for 300s. Only GETs are retried.
+  const deadline = now() + budgetMs;
+  for (let attempt = 1; attempt <= 12; attempt++) {
+    const results = await Promise.all(['https://avitus-materia-web.fly.dev/kreator', 'https://avitus-materia.com/kreator'].map(url => verifyPage(url, fetcher, emit)));
+    if (results.every(Boolean)) return true;
+    const remaining = deadline - now();
+    if (remaining <= 0 || attempt === 12) return false;
+    emit({ event: 'catalog.refresh_wait', attempt });
+    await pause(Math.min(30000, remaining));
+  }
+  return false;
+}
+module.exports = { verifyPage, safeCatalogLogs, verifyWithRefresh };
 async function run() {
   const emit = record => console.log(JSON.stringify(record));
-  const results = await Promise.all(['https://avitus-materia-web.fly.dev/kreator', 'https://avitus-materia.com/kreator'].map(url => verifyPage(url, fetch, emit)));
+  const passed = await verifyWithRefresh(fetch, emit);
   try {
     const raw = execFileSync('flyctl', ['logs', '--no-tail', '-a', 'avitus-materia-web'], { encoding: 'utf8', timeout: 45000, maxBuffer: 2 * 1024 * 1024, stdio: ['ignore','pipe','pipe'] });
     const records = safeCatalogLogs(raw);
     emit({ event: 'catalog.telemetry', records: records.length });
     records.forEach(emit);
   } catch { emit({ event: 'catalog.telemetry_unavailable' }); }
-  process.exitCode = results.every(Boolean) ? 0 : 1;
+  process.exitCode = passed ? 0 : 1;
 }
 if (require.main === module) run().catch(() => { console.log('{"event":"catalog.public_failure"}'); process.exitCode = 1; });

@@ -34,6 +34,7 @@ jobs:
           node-version: 22
       - run: node scripts/verify-deployment-safety.mjs
       - run: node --test scripts/diagnose-production-db.test.cjs scripts/verify-catalog-capability.test.cjs scripts/run-catalog-probe.test.cjs scripts/verify-public-configurator.test.cjs
+      - run: python3 -m unittest discover -s scripts -p 'test_stage_web_api_url.py'
       - run: corepack enable
       - run: pnpm install --frozen-lockfile
       - run: bash scripts/fly-codespaces-smoke-test.sh

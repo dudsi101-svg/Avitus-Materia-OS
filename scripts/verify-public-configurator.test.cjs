@@ -1,6 +1,6 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const { verifyPage, safeCatalogLogs } = require('./verify-public-configurator.cjs');
+const { verifyPage, safeCatalogLogs, verifyWithRefresh } = require('./verify-public-configurator.cjs');
 test('external capability requires actual form and rejects demo/error pages', async () => {
   for (const [status, html, expected] of [[200, '<form class="amRequestForm"></form>', true], [200, 'Ustalmy punkt startowy', false], [503, '<form class="amRequestForm"></form>', false]]) {
     assert.equal(await verifyPage('https://avitus-materia.com/kreator', async (_, options) => {
@@ -18,4 +18,14 @@ test('network failure logs neither raw exceptions nor response body', async () =
   const records = [];
   assert.equal(await verifyPage('https://avitus-materia.com/kreator', () => { throw Error('private'); }, r => records.push(r)), false);
   assert.doesNotMatch(JSON.stringify(records), /private/);
+});
+
+test('bounded GET-only refresh wait accepts a recovered page and stops on deadline', async () => {
+  let clock = 0, calls = 0;
+  const fetcher = async () => ({ status: 200, text: async () => ++calls <= 2 ? 'Ustalmy punkt startowy' : '<form class="amRequestForm"></form>' });
+  assert.equal(await verifyWithRefresh(fetcher, () => {}, () => clock, async ms => { clock += ms; }, 60000), true);
+  assert.equal(calls, 4); assert.equal(clock, 30000);
+  clock = 0; calls = 0;
+  assert.equal(await verifyWithRefresh(async () => { calls++; return { status: 503, text: async () => '' }; }, () => {}, () => clock, async ms => { clock += ms; }, 30000), false);
+  assert.equal(calls, 4); assert.equal(clock, 30000);
 });

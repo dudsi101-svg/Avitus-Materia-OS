@@ -224,3 +224,7 @@ For v0.1 prefer simplicity:
 `home.pl DNS -> Fly web -> Fly private network -> Fly API -> Fly Managed Postgres`
 
 Do not introduce Vercel/Railway unless a measured limitation later justifies splitting the stack.
+
+### Web API route ownership (Hardening 08)
+
+`fly.web.toml` declares the approved private API location. The trusted deployment stages the same non-secret `AVITUS_API_URL` value before web rollout because the current Fly app also stores this name as a secret, which overrides ordinary environment configuration. Do not manually diverge these values. This synchronization never reads or changes `PUBLIC_INQUIRY_API_KEY`. Runtime catalog events report only outcome/status/origin category, not credentials or URLs. External capability verification tolerates the existing 300-second ISR refresh window and must find the actual request form on both public origins.
