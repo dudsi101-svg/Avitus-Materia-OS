@@ -3,12 +3,13 @@
 Protocol: `docs/COORDINATION.md`. Update this file whenever you start, hand off or finish a lane.
 PRs on GitHub are the tie-breaker if this board is stale.
 
-_Last updated: 2026-10-01_
+_Last updated: 2026-11-14_
 
 ## Active lanes
 
 | Lane | Owner | Branch | PR | Touches | Status |
 |---|---|---|---|---|---|
+| Website Stage 1 (rebrand Drakkar → Avitus, marketing site) | Claude | `claude/gallant-bardeen-5rkqfd` | — | `apps/web` content/SEO/assets, `docs/WEBSITE_STAGE_1.md` | Claimed 2026-11-14; audit done, 1A next |
 | Configurator runtime diagnosis | Codex | `codex/catalog-private-route` | follow-up to #40 | read-only capability probe, deployment workflow/tests, docs | Claimed 2026-10-01; restore documented private API route after fly_public TIMEOUT; preserve key; bounded ISR verification |
 
 ## Reservations
